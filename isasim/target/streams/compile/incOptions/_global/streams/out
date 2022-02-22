@@ -1,0 +1,2 @@
+[debug] Created transactional ClassFileManager with tempDir = /home/patmos/t-crest/patmos/isasim/target/scala-2.12/classes.bak
+[debug] Removing the temporary directory used for backing up class files: /home/patmos/t-crest/patmos/isasim/target/scala-2.12/classes.bak

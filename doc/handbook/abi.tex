@@ -1,0 +1,231 @@
+\section{Data Representation}
+
+Data words in memories are stored using the big-endian data representation, this
+also includes the instruction representation.
+
+\section{Register Usage Conventions}
+
+The register usage conventions for the general purpose registers are as follows:
+\begin{itemize}
+  \item \texttt{r0} is defined to be zero at all times. This is actually not just a convention,
+  but implemented by the hardware.
+  \item \texttt{r1} and \texttt{r2} are used to pass the return value on
+        function calls. \\
+        For 64 bit results, the high part is stored in \texttt{r1},
+        the low part in \texttt{r2}.
+	32 bit results are returned using \texttt{r1} only.
+  \item \texttt{r3} through \texttt{r8} are used to pass arguments on function
+        calls. \\
+        For 64 bit arguments, the high part is stored first,
+        followed by the low part.\\ E.g., for a 64 bit argument passed in
+        \texttt{[r3,r4]}, the high part is in \texttt{r3}, the low part
+        in \texttt{r4}.
+  \item \texttt{r29} is used as temp register.
+  \item \texttt{r30} is defined as the frame pointer and
+        \texttt{r31} is defined as the stack pointer for the \emph{shadow}
+        stack in global memory.
+        The use of a frame pointer is optional, the register can freely be
+        used otherwise.
+	\texttt{r31} is guaranteed to always hold the current stack pointer and
+        is not used otherwise by the compiler.
+  \item \texttt{r1} through \texttt{r19} are caller-saved \emph{scratch}
+        registers.
+  \item \texttt{r20} through \texttt{r31} are callee-saved \emph{saved}
+        registers.
+\end{itemize}
+
+The usage conventions of the predicate registers are as follows:
+\begin{itemize}
+  \item all predicate registers are callee-saved \emph{saved} registers.
+\end{itemize}
+
+
+\stefan{We would gain in most cases by making predicates caller-saved, since predicates are usually not
+used across function calls, this saves up to 6 instructions per call.
+Predicate live ranges over calls only happen with single-path and if-conversion. However, having only caller-saved predicates
+makes if-conversion of calls too costly (and too complex). A nicer solution would be to have p1-p4 caller-saved and
+p5-p7 callee saved. I got this to work (do not alias s0 with p1-p7 in RegInfo.td, mark s0 and p5-p7 as callee saved
+in RegInfo.cpp, and in processBeforeCalleeSavedScan set s0 as used when any of p5-p7 is used), but this would require the
+if-converter to use callee-saved predicates when converting calls, i.e., to change the predicate of the condition.
+Sounds easy, but is actually far from trivial to hack into the if-converter, and only works if the if-converter runs before the
+prologue-inserter, so we stay with callee saved registers for now and live with the costs of spilling s0 at nearly every call.}
+\daniel{It would also break the single-path conversion pass.}
+
+The usage conventions of the special registers are as follows:
+\begin{itemize}
+  \item \texttt{s0}, representing the predicate registers, is a callee-saved
+        \emph{saved} register.
+  \item The stack cache control registers \texttt{ss} and \texttt{st} are
+        callee-saved \emph{saved} registers.
+  \item The return information registers \texttt{s7-s10} (\texttt{srb},
+        \texttt{sro}, \texttt{sxb}, \texttt{sxo}) are callee-saved
+        \emph{saved} registers.
+  \item All other special registers are caller-saved scratch registers and
+        should not be used across function calls.
+\end{itemize}
+
+
+
+\section{Function Calls}
+\label{sec:function_calls}
+
+Function calls have to be executed using the \texttt{call}
+instruction that automatically prefetches the target function to the method
+cache and stores the return information in the special registers \texttt{srb}
+and \texttt{sro}.
+
+The register usage conventions of the previous section indicate which registers
+are preserved across function calls.
+
+The first $6$ arguments of integral data type are passed in registers, where
+64-bit integer and floating point types occupy two registers. All other
+arguments are passed on the \emph{shadow} stack via the global memory.
+
+\fb{We could pass arguments via the stack cache, however, this would work only
+for functions with a fixed number of arguments. The calling convention for
+variadic function would then differ from the standard conventions. We should
+probably also introduce a size limit on how many arguments should be passed via
+the stack cache. Thus, for a first shot I decided to keep the conventions
+simple.}
+\martin{I would like to see arguments passed via the stack cache. No
+reason to go via main memory (when the number is fixed.}
+
+\martin{BTW: an on-chip stack, with single cycle access, is not so different from
+a large register file. Maybe using a sliding window to keep the number of
+addressing bits down. Shall we merge the stack cache with the register file?
+Are we than redoing a stack (Java) processor?}
+
+When the return function base \texttt{srb} and the return offset \texttt{sro}
+needs to be saved to the stack, they have to be saved as the first elements of
+the function's stack frame, i.e., right after the stack frame of the calling
+function.
+%
+Note that in contrast to \texttt{br} and \texttt{brcf} the return offset refers
+to the next instruction after the \emph{delay slot} of the corresponding
+\texttt{call} and can be implementation dependent (cf.\ the description of the
+\texttt{call} and \texttt{ret} instructions).
+
+\section{Sub-Functions}
+A function can be split into several sub-functions. The program is only allowed to use
+\texttt{br} to jump within the same sub-function. To enter a different sub-function,
+\texttt{brcf} must be used. It can only be used to jump to the first instruction of a
+sub-function.
+
+In contrast to \texttt{call}, \texttt{brcf} does not provide link information.
+Executing \texttt{ret} in a sub-function will therefore return to the last \texttt{call}, not to the last \texttt{brcf}.
+Function offsets however are relative to the \emph{sub-function} base, not to the surrounding function.
+The function base register \texttt{r30} must therefore be set to the base address
+of the current \emph{sub-function} for calls inside sub-functions.
+
+A sub-function must be aligned and must be prefixed with a word containing the size of the sub-function,
+like for a regular function. If a function is split into sub-functions, the first sub-function
+must also be prefixed with the size of the first sub-function, not with the size of the whole function.
+
+There are no calling conventions for jumps between sub-functions, for the compiler
+this behaves just like a regular jump.
+% except that the base register texttt{srb} must be updated if the
+% sub-function contains calls.
+
+
+% TODO: examples
+
+\stefan{We need to define how the call and local branch with cache fill get the size of the code to load. A word
+containing the size at the target address, or prior to the target address? (including or excluding the size word?)}
+
+\jack{I'd store the code size at the target address and have the
+method itself start at an offset +4 or +8 from that place. I also
+suggest storing the stack size here too. Could fit into the same
+32-bit word (since I'd guess the local memory size limits us to
+$<64$k code and $<64$k stack in a single method anyway).}
+
+\martin{Agree for plain C code where there is no data structure
+further describing a function. In the JOP JVM I have the luxury
+to have those sizes as part of the virtual method dispatch table.
+One indirection is there needed anyway, so why not having those
+data there.}
+
+\section{Stack Layout}
+
+All stack data in the global memory, either managed by the stack cache or using
+a frame/stack pointer, grows from top-to-bottom. The use of a frame pointer is
+optional.
+
+Unwinding of the call stack is done on the stack-cache managed stack frame,
+following the conventions declared in the previous subsection on function calls.
+
+\section{Interrupts and Context Switching}
+
+\daniel{TODO update}
+
+Interrupt handlers may use the shadow stack pointer \texttt{r31} to spill registers
+to the shadow stack. Interrupt handlers must ensure that all special registers
+that might be in use when the interrupt occurs % MS: there is probably no 'might' WP: not all special registers are used, e.g., s11-s15
+are saved and restored.
+%
+Here is an example of storing and restoring the context for context switching.
+\begin{verbatim}
+sub $r31 = $r31, 56
+swc [$r31 + 0] = $r20  // free some registers
+swc [$r31 + 1] = $r21
+swc [$r31 + 2] = $r22
+swc [$r31 + 3] = $r23
+mfs $r20 = $s0
+mfs $r21 = $sm
+mfs $r22 = $sl  // by now any mul should be finished
+mfs $r23 = $sh
+swc [$r31 + 4] = $r20
+swc [$r31 + 5] = $r21
+swc [$r31 + 6] = $r22
+swc [$r31 + 7] = $r23
+mfs $r22 = $ss  // read out cache pointers, spill
+mfs $r23 = $st
+sub $r22 = $r23, $r22
+sspill $r22   // spill the memory, s5 == s6 now
+swc [$r31 + 8] = $r22  // store the stack pointer
+swc [$r31 + 9] = $r23  // store stack size
+mfs $r20 = $srb  // store return info
+mfs $r21 = $sro
+mfs $r22 = $sxb
+mfs $r23 = $sxo
+swc [$r31 + 10] = $r20
+swc [$r31 + 11] = $r21
+swc [$r31 + 12] = $r22
+swc [$r31 + 13] = $r23
+swc [$r31 + 14] = $r30 // store frame pointer
+...
+
+// restore
+lwc $r20 = [$r31 + 4]
+lwc $r21 = [$r31 + 5]
+lwc $r22 = [$r31 + 6]
+lwc $r23 = [$r31 + 7]
+mts $s0 = $r20
+mts $sm = $r21
+mts $sl = $r22
+mts $sh = $r23
+lwc $r22 = [$r31 + 8] // restore the stack
+lwc $r23 = [$r31 + 9]
+mts $ss = $r23
+mts $st = $r23   // set top = spill and fill from memory
+sens $r22
+lwc $r20 = [$r31 + 10] // restore return registers
+lwc $r21 = [$r31 + 11]
+lwc $r22 = [$r31 + 12]
+lwc $r23 = [$r31 + 13]
+mts $srb = $r20  // restore return infos and registers
+mts $sro = $r21
+mts $sxb = $r22
+mts $sxo = $r23
+lwc $r20 = [$r31 + 0]
+lwc $r21 = [$r31 + 1]
+lwc $r22 = [$r31 + 2]
+lwc $r23 = [$r31 + 3]
+lwc $r30 = [$r31 + 14]
+xret
+add $r31 = $r31, 52
+nop
+nop
+\end{verbatim}
+
+\todo{Check why add is 52 and not 56 as in the beginning.}
+

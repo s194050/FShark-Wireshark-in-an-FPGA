@@ -1,0 +1,40 @@
+#! /bin/bash
+
+function usage() {
+    echo "Usage: $0 [-v] [-t <time>] [-h] <port> <file>"
+}
+
+VERBOSE=false
+TIMEOUT=0
+
+# Parse options
+while getopts "hvt:" arg; do
+    case $arg in
+        v)
+            VERBOSE=true
+            ;;
+        t)
+            TIMEOUT="$OPTARG"
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage 1>&2
+            exit 1
+            ;;
+    esac
+done
+
+# Check argument count
+shift $((OPTIND-1))
+if [ $# -ne 2 ]; then
+    usage 1>&2
+    exit 1
+fi
+
+# Actual downloading
+BASEDIR=$(cd $(dirname "$0")/..; pwd)
+timeout --foreground "$TIMEOUT" \
+    java -Dverbose="$VERBOSE" -cp $BASEDIR/lib/java/\* patserdow.Main "$1" "$2"

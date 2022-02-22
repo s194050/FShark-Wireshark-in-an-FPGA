@@ -1,0 +1,119 @@
+#! /bin/bash
+
+function usage() {
+    echo "Usage: $0 [-I <file>] [-O <file>] [-h] <file>"
+}
+
+function error_exit
+{
+	echo "$1" 1>&2
+	exit -1
+}
+
+TMPDIR=/tmp
+
+if [ -z "$PATMOS_HOME" ]; then
+    PATMOS_HOME=@PATMOS_HOME@
+fi
+if [ -z "$COM_PORT" ]; then
+    COM_PORT=@COM_PORT@
+fi
+if [ -z "$TIMEOUT" ]; then
+    TIMEOUT=300
+fi
+
+if [ -z "$PATEX_CONFIG" ]; then
+    PATEX_CONFIG=Make
+fi
+if [ -z "$PATEX_CONFIGFILE" ]; then
+    PATEX_CONFIGFILE=
+fi
+
+if [ -n "$BLASTER_TYPE" ]; then
+    BLASTER_OPTION="-b \"$BLASTER_TYPE\""
+fi
+
+INFILE="/dev/stdin"
+OUTFILE="/dev/stdout"
+
+# Parse options
+while getopts "hI:O:" arg; do
+    case $arg in
+        I)
+            INFILE="$OPTARG"
+            ;;
+        O)
+            OUTFILE="$OPTARG"
+            ;;
+        h)
+            usage
+            echo ""
+            echo "The environment variable PATEX_CONFIG determines how the FPGA is configured."
+            echo "Permissible values are: 'Make' (default), 'Altera', or 'Xilinx'" 
+            echo "- 'Make' means that the FPGA is configured by calling 'make config'"
+            echo "  in the directory specified in environment variable PATMOS_HOME."
+            echo "- 'Altera' means that the FPGA is configured by calling 'config_altera'"
+            echo "  with the file specified in environment variable 'PATEX_CONFIGFILE'."
+            echo "  If the environment variable 'BLASTER_TYPE' is set, it is used as the"
+            echo "  blaster type."
+            echo "- 'Xilinx' means that the FPGA is configured by calling 'config_xilinx'"
+            echo "  with the file specified in environment variable 'PATEX_CONFIGFILE'."
+            echo ""
+            echo "The environment variable COM_PORT sets the serial port for downloading."
+            echo "The environment variable TIMEOUT sets a timeout in seconds (default: 300)"
+            echo "Setting the environment variable VERBOSE to 'true' turns on verbose output."
+            exit 0
+            ;;
+        *)
+            usage 1>&2
+            exit 1
+            ;;
+    esac
+done
+
+# Check argument count
+shift $((OPTIND-1))
+if [ $# -ne 1 ]; then
+    usage 1>&2
+    exit 1
+fi
+
+# Download configuration file if necessary
+case "$PATEX_CONFIGFILE" in
+    http://*|https://*|ftp://*)
+        wget -P $TMPDIR -x -nv -N $PATEX_CONFIGFILE
+        CONFIGFILE=$TMPDIR/`echo "$PATEX_CONFIGFILE" | sed 's#^.*://\(.*\)$#\1#'`
+        ;;
+    *)
+        CONFIGFILE="$PATEX_CONFIGFILE"
+        ;;
+esac
+
+# Turn on/off output from FPGA configuration
+if [ "$VERBOSE" = "true" ]; then
+    CONFOUT=/dev/stderr
+else
+    CONFOUT=/dev/null
+fi
+
+# Configure FPGA
+case "$PATEX_CONFIG" in
+    Altera)
+        config_altera $BLASTER_OPTION "$CONFIGFILE" &> $CONFOUT
+        ;;
+    Xilinx)
+        config_xilinx "$CONFIGFILE" &> $CONFOUT
+        ;;
+    Make)
+        make -C "$PATMOS_HOME" config &> $CONFOUT
+        ;;
+    *)
+        echo "Unknown configuration type: $PATEX_CONFIG" 1>&2
+        ;;
+esac || error_exit "FPGA configuration failed"
+
+# Download program to FPGA
+BASEDIR=$(cd $(dirname "$0")/..; pwd)
+timeout --foreground "$TIMEOUT" \
+    java -Dverbose="$VERBOSE" -cp $BASEDIR/lib/java/\* patserdow.Main "$COM_PORT" "$1" \
+    < "$INFILE" > "$OUTFILE"
