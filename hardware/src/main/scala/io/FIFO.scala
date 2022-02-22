@@ -14,11 +14,30 @@ object FIFO extends DeviceObject {
 }
 
 class FIFO() extends CoreDevice() {
-  val io = IO(new Bundle {
-    val enq = Flipped(new DecoupledIO(42.U))
-    val deq = new DecoupledIO(42.U)
-  })
-  
+override val io = IO(new CoreDeviceIO(){
+  val enq = Flipped(new DecoupledIO(42.U))
+  val deq = new DecoupledIO(42.U)
+})
+
+  val fullReg = RegInit(false.B)
+  val dataReg = Reg(42.U)
+
+  when (fullReg) {
+    when (io.deq.ready) {
+      fullReg := false.B
+    }
+  } .otherwise {
+    when (io.enq.valid) {
+      fullReg := true.B
+      dataReg := io.enq.bits
+    }
+  }
+  io.enq.ready := !fullReg
+  io.deq.valid := fullReg
+  io.deq.bits := dataReg
+
+
+
   val countReg = Reg(init = UInt(0, 32))
   countReg := countReg + UInt(1)
   when (io.ocp.M.Cmd === OcpCmd.WR) {
