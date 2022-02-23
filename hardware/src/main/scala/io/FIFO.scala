@@ -1,9 +1,8 @@
 package io
 
 import Chisel._
-import chisel3.util._
+import chisel3.{WireInit, when}
 import patmos.Constants._
-
 import ocp._
 
 object FIFO extends DeviceObject {
@@ -16,10 +15,27 @@ object FIFO extends DeviceObject {
 
 class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle with ready-valid interface
 override val io = IO(new CoreDeviceIO(){
-  val enq = Flipped(new DecoupledIO(32.U)) //Writer to FIFO
-  val deq = new DecoupledIO(32.U) // Reader to FIFO
+  val enq = Flipped(new DecoupledIO(0.U)) //Writer to FIFO
+  val deq = new DecoupledIO(0.U) // Reader to FIFO
 })
+  def counter(incr: Bool): (UInt, UInt) = {
+    val cntReg = RegInit(0.U(log2Ceil(32).W))
+    val nextVal = Mux(cntReg === (32-1).U, 0.U, cntReg + 1.U)
+    when (incr) {
+      cntReg := nextVal
+    }
+    (cntReg, nextVal)
+  }
 
+  // the register based memory
+  val memReg = Reg(Vec(32, 0.U))
+
+  val incrRead = WireInit(false.B)
+  val incrWrite = WireInit(false.B)
+  val (readPtr, nextRead) = counter(incrRead)
+  val (writePtr, nextWrite) = counter(incrWrite)
+
+  // Initiate boolean values and OCPcore
   val masterReg = Reg(next = io.ocp.M) // To use OCPcore
   val emptyReg = RegInit(true.B)
   val fullReg = RegInit(false.B) // Bool to signal whether FIFO is full
@@ -29,28 +45,30 @@ override val io = IO(new CoreDeviceIO(){
   val respReg = Reg(init = OcpResp.NULL)
   respReg := OcpResp.NULL
 
+  when (io.enq.valid && !fullReg) {
+    memReg(writePtr) := io.enq.bits
+    emptyReg := false.B
+    fullReg := nextWrite === readPtr
+    incrWrite := true.B
+  }
+  when (io.deq.ready && !emptyReg) {
+    fullReg := false.B
+    emptyReg := nextRead === writePtr
+    incrRead := true.B
+  }
+  //Writer
   when(masterReg.Cmd === OcpCmd.WR){ // Write to FIFO
-    when(io.enq.valid && !fullReg){
-      respReg := OcpResp.DVA
-      io.enq.bits := masterReg.Data
-      emptyReg := false.B
-      fullReg := true.B
-      dataReg := io.enq.bits
-    }
+    respReg := OcpResp.DVA
+    masterReg.Data := io.enq.bits
   }
 
+//Reader
   when(masterReg.Cmd === OcpCmd.RD){ // Read from FIFO
-    when(io.deq.ready && !emptyReg){
-      respReg := OcpResp.DVA
-      fullReg := false.B
-      emptyReg := true.B
-    }
+    respReg := OcpResp.DVA
+    io.deq.bits := memReg(readPtr)
   }
-
   io.enq.ready := !fullReg
   io.deq.valid := !emptyReg
-  io.deq.bits := dataReg
-
   // Connections to master
   io.ocp.S.Resp := respReg
   io.ocp.S.Data := io.deq.bits
