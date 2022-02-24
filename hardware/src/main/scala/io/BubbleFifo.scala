@@ -15,7 +15,7 @@ class BubbleFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int)
     val dataReg = Reg(gen)
 
     when (fullReg) {
-      when (io.deq.ready) {
+        when (io.deq.ready) {
         fullReg := false.B
       }
     } .otherwise {

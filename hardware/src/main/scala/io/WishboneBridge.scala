@@ -82,6 +82,10 @@ class WishboneBridge(extAddrWidth : Int = 32,
   we_o_Reg := Bool(false)
   stb_o_Reg := Bool(false)
   cyc_o_Reg := Bool(false)
+  val reader = Module(new Queue(Bits(width = 8), 32))
+  reader.io.enq.bits     := io.ocp.M.Data(7, 0)
+  reader.io.enq.valid    := Bool(false)
+  reader.io.deq.ready    := Bool(false)
   ocp_S_resp_Reg := OcpResp.DVA
   ocp_S_data_Reg := io.pins.wb_data_i
   }

@@ -15,9 +15,6 @@ object FIFO extends DeviceObject {
 // Temp FIFO in chisel3 to be written in VHDL for final version
 
 class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle with ready-valid interface
-  override val io = IO(new CoreDeviceIO() {
-    val enq = Flipped(new DecoupledIO(0.U))
-  })
   // Include FSM
   val FSM = Module(new SimpleFSM)
   // Default response
@@ -25,7 +22,7 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
   respReg := OcpResp.NULL
 
   // the register based memory
-  val memReg = Reg(Vec(32, 0.U))
+  val memReg = Reg(Vec(32, UInt(32.W)))
   val incrRead = WireInit(false.B)
   val incrWrite = WireInit(false.B)
   val (readPtr, nextRead) = counter(incrRead)
@@ -47,7 +44,7 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
   }
 
   when (!fullReg) {
-    memReg(writePtr) := FSM.io.dataReg
+    memReg(writePtr) := FSM.io.enq.bits
     emptyReg := false.B
     fullReg := nextWrite === readPtr
     incrWrite := true.B
@@ -62,8 +59,8 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
   when(masterReg.Cmd === OcpCmd.WR){
   }
 
-  io.enq.ready := !fullReg
+  FSM.io.enq.ready := !fullReg
   // Connections to master
-  io.ocp.S.Data := memReg(readPtr)
   io.ocp.S.Resp := respReg
+  io.ocp.S.Data := memReg(readPtr)
 }
