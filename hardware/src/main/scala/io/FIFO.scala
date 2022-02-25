@@ -21,6 +21,15 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
   val respReg = Reg(init = OcpResp.NULL)
   respReg := OcpResp.NULL
 
+  def counter(incr: Bool): (UInt, UInt) = { // To count elements in register
+    val cntReg = RegInit(0.U(log2Ceil(32).W))
+    val nextVal = Mux(cntReg === (31).U, 0.U, cntReg + 1.U)
+    when (incr) {
+      cntReg := nextVal
+    }
+    (cntReg, nextVal)
+  }
+
   // the register based memory
   val memReg = Reg(Vec(32, UInt(32.W)))
   val incrRead = WireInit(false.B)
@@ -30,18 +39,9 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
 
   // Initiate boolean values and OCPcore
   val masterReg = Reg(next = io.ocp.M) // To use OCPcore
+  val read = RegInit(false.B)
   val emptyReg = RegInit(true.B)
   val fullReg = RegInit(false.B) // Bool to signal whether FIFO is full
-
-
-  def counter(incr: Bool): (UInt, UInt) = { // To count elements in register
-    val cntReg = RegInit(0.U(log2Ceil(32).W))
-    val nextVal = Mux(cntReg === (32-1).U, 0.U, cntReg + 1.U)
-    when (incr) {
-      cntReg := nextVal
-    }
-    (cntReg, nextVal)
-  }
 
   when (!fullReg) {
     memReg(writePtr) := FSM.io.enq.bits
@@ -50,13 +50,15 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
     incrWrite := true.B
   }
 
-  when (masterReg.Cmd === OcpCmd.RD) {
-    respReg := OcpResp.DVA
+  when (!emptyReg && read) {
     fullReg := false.B
     emptyReg := nextRead === writePtr
     incrRead := true.B
+    read := false.B
   }
-  when(masterReg.Cmd === OcpCmd.WR){
+  when(masterReg.Cmd === OcpCmd.RD){
+    respReg := OcpResp.DVA
+    read := true.B
   }
 
   FSM.io.enq.ready := !fullReg
