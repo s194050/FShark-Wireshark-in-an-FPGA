@@ -15,8 +15,8 @@ object FIFO extends DeviceObject {
 // Temp FIFO in chisel3 to be written in VHDL for final version
 
 class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle with ready-valid interface
-  // Include FSM
-  val FSM = Module(new SimpleFSM)
+  // Include DFA
+  val DFA = Module(new DFA)
   // Default response
   val respReg = Reg(init = OcpResp.NULL)
   respReg := OcpResp.NULL
@@ -44,7 +44,7 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
   val fullReg = RegInit(false.B) // Bool to signal whether FIFO is full
 
   when (!fullReg) {
-    memReg(writePtr) := FSM.io.enq.bits
+    memReg(writePtr) := DFA.io.deq.bits
     emptyReg := false.B
     fullReg := nextWrite === readPtr
     incrWrite := true.B
@@ -61,7 +61,7 @@ class FIFO() extends CoreDevice() { // Create DecoupledIO, which is a bundle wit
     read := true.B
   }
 
-  FSM.io.enq.ready := !fullReg
+  DFA.io.deq.ready := !fullReg
   // Connections to master
   io.ocp.S.Resp := respReg
   io.ocp.S.Data := memReg(readPtr)
