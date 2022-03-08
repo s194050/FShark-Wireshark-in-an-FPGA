@@ -15,11 +15,17 @@ class IWToplevel extends  Module {
   DFAFIFO.io.deqDFA.ready := DFA.io.enq.ready
   DFA.io.enq.valid := DFAFIFO.io.deqDFA.valid
   DFA.io.enq.bits := DFAFIFO.io.deqDFA.bits
+  DFAFIFO.io.read := DFA.io.read
 
   // Connect DFA FIFO and Simple FSM
   FSM.io.FSMdeq.ready := DFAFIFO.io.enqDFA.ready
   DFAFIFO.io.enqDFA.valid := FSM.io.FSMdeq.valid
   DFAFIFO.io.enqDFA.bits := FSM.io.FSMdeq.bits
+
+  // Connect DFA to Simple FSM output
+  //FSM.io.FSMdeq.ready := DFA.io.enqFSM.ready
+  //DFA.io.enqFSM.valid := FSM.io.FSMdeq.valid
+  //DFA.io.enqFSM.bits := FSM.io.FSMdeq.bits
 
   // Connect FIFO and DFA
   DFA.io.deq.ready := io.deq.ready

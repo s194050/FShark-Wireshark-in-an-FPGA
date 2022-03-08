@@ -13,23 +13,23 @@ class SimpleFSM() extends Module {
 
   val count = RegInit(65.U(8.W))
   when(io.FSMdeq.ready ) {
-  switch(stateReg) {
-    is(idle) {
-      count := count + 1.U
-      stateReg := transfer
+    switch(stateReg) {
+      is(idle) {
+        count := count + 1.U
+        stateReg := transfer
+      }
+      is(transfer) {
+        count := count + 1.U
+        stateReg := end
+      }
+      is(end) {
+        count := count + 1.U
+        stateReg := idle
+      }
     }
-    is(transfer) {
-      count := count + 1.U
-      stateReg := end
-    }
-    is(end) {
-      count := count + 1.U
-      stateReg := idle
-    }
+      when(count === 90.U){
+        count := 65.U
+      }
+      io.FSMdeq.bits := count
   }
-    when(count === 90.U){
-      count := 65.U
-    }
-    io.FSMdeq.bits := count
-}
 }

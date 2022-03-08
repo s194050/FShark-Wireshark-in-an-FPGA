@@ -2,16 +2,13 @@ package io
 
 import Chisel._
 import chisel3.{WireInit, when}
-import ocp._
 
-
-
-// Temp FIFO in chisel3 to be written in VHDL for final version
 
 class DFAinputFIFO() extends Module() { // Create DecoupledIO, which is a bundle with ready-valid interface
   val io = IO(new Bundle{
     val enqDFA = Flipped(new DecoupledIO(UInt(32.W)))
     val deqDFA = new DecoupledIO(UInt(32.W))
+    val read = Input(Bool())
   })
 
   def counter(incr: Bool): (UInt, UInt) = { // To count elements in register
@@ -41,14 +38,14 @@ class DFAinputFIFO() extends Module() { // Create DecoupledIO, which is a bundle
     incrWrite := true.B
   }
 
-  when (!emptyReg) {
+  when (!emptyReg && io.read) {
     fullReg := false.B
     emptyReg := nextRead === writePtr
     incrRead := true.B
   }
 
 
-  io.deqDFA.bits := memReg(readPtr)
   io.enqDFA.ready := !fullReg
   io.deqDFA.valid := !emptyReg
+  io.deqDFA.bits := memReg(readPtr)
 }
