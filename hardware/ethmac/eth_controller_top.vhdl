@@ -6,7 +6,7 @@
 -- Ethernet controller VHDL top level
 --
 
-library ieee;
+library ieee; 
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.textio.all;
@@ -29,7 +29,7 @@ entity eth_controller_top is
 
 		--PHY interface
 		-- Tx
-		mtx_clk_pad_i : in  std_logic;  -- Transmit clock (from PHY)
+		mtx_clk_pad_i : in  std_logic;  -- Transmit clock (from PHY)f
 		mtxd_pad_o    : out std_logic_vector(3 downto 0); -- Transmit nibble (to PHY)
 		mtxen_pad_o   : out std_logic;  -- Transmit enable (to PHY)
 		mtxerr_pad_o  : out std_logic;  -- Transmit error (to PHY)
