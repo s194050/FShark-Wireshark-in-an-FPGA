@@ -63,7 +63,6 @@ class FPSMIO extends FPSMpins {
 
 class FPSMBB extends BlackBox {
   val io = new FPSMIO()
-
 }
 object FPGAsharkMAC extends DeviceObject {
 
@@ -96,5 +95,46 @@ class FPGAsharkMAC extends CoreDevice {
   tx_axis_tvalid_Reg := Bool(false)
   blackbox.io.tx_axis_tvalid := tx_axis_tvalid_Reg
 
-  val datareg = Reg(init = Bits(0,32))
+  // Data recieved from Verilog Ethernet MAC
+  val dataReader = Reg(init = Bits(0,32))
+
+  // Data to Verilog Ethernet MAC
+  val dataWriter= Reg(init = Bits(0,32))
+  blackbox.io.tx_axis_tlast := dataWriter(30)
+  blackbox.io.tx_axis_tdata := dataWriter(7,0)
+
+
+  val macIdle :: macWait :: macRead :: Nil = Enum(UInt(), 3)
+  val stateMAC = Reg(init = macIdle)
+
+  when(io.ocp.M.Cmd === OcpCmd.WR) {
+    respReg := OcpResp.DVA
+    tx_axis_tvalid_Reg := Bool(true)
+    dataWriter := io.ocp.M.Data
+  }
+
+  when(stateMAC === macIdle) {
+    when(io.ocp.M.Cmd === OcpCmd.RD) {
+      when(io.ocp.M.Addr(0) === Bool(false)) {
+        stateMAC := macWait
+        rx_axis_tready_Reg := Bool(true)
+      }
+        .otherwise {
+          respReg := OcpResp.DVA
+          dataReader := Cat(blackbox.io.tx_axis_tready,Bits(0,31))
+        }
+    }
+  }
+  when(stateMAC === macWait) {
+    stateMAC := macRead
+  }
+  when(stateMAC === macRead) {
+    stateMAC := macIdle
+    respReg := OcpResp.DVA
+    dataReader := Cat(blackbox.io.rx_axis_tvalid,Cat(blackbox.io.rx_axis_tlast,Cat(Bits(0,22),blackbox.io.rx_axis_tdata)))
+  }
+
+  // Connections to master
+  io.ocp.S.Resp := respReg
+  io.ocp.S.Data := dataReader
 }

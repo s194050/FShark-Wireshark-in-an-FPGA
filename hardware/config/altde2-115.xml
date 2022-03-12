@@ -17,6 +17,7 @@
   <IO DevTypeRef="Leds" offset="9"/>
   <IO DevTypeRef="Keys" offset="10" intrs="2,3,4,5"/>
   <IO DevTypeRef="FIFO" offset="11"/>
+  <IO DevTypeRef="FPGAsharkMAC" offset="12"/>
   </IOs>
 
   <Devs>
@@ -43,5 +44,6 @@
     </params>
   </Dev>
   <Dev DevType="FIFO" entity="FIFO" iface="OcpCore"/>
+  <Dev DevType="FPGAsharkMAC" entity="FPGAsharkMAC" iface="OcpCore"/>
   </Devs>
 </patmos>
