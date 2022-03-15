@@ -8,6 +8,7 @@ BOOTBUILDDIR?=$(BOOTBUILDROOT)/tmp
 BOOTBIN?=$(BOOTBUILDDIR)/$(BOOTAPP).bin
 BOOTDAT?=$(BOOTBUILDDIR)/$(BOOTAPP).dat
 
+
 BOARD?=altde2-115
 BOOTSPM_BASE?=0x00020000
 
@@ -92,7 +93,6 @@ test: emulator
 # view detailed emulation results
 view:
 	gtkwave Patmos.vcd wave.gtkw
-
 # build the Verilog version
 verilog: $(HWBUILDDIR)/$(HWMODULEPREFIX)Patmos.v
 

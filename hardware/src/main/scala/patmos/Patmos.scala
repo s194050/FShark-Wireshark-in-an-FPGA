@@ -577,5 +577,5 @@ object PatmosMain extends App {
 	  
   new java.io.File("build/").mkdirs // build dir is created
   Config.loadConfig(configFile)
-  (new chisel3.stage.ChiselStage).emitVerilog(new Patmos(configFile, binFile, datFile), chiselArgs)
+  (new chisel3.stage.ChiselStage).emitVerilog(new Patmos(configFile, binFile, datFile),chiselArgs)
 }
