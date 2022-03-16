@@ -28,6 +28,21 @@ entity patmos_top is
     oSRAM_WE_N : out std_logic;
     oSRAM_LB_N : out std_logic;
     oSRAM_UB_N : out std_logic
+
+    -- Phy0
+
+
+
+
+
+    phy0_rx_clk(ENET0_RX_CLK),
+    .phy0_rxd(ENET0_RX_DATA),
+    .phy0_rx_ctl(ENET0_RX_DV),
+    .phy0_tx_clk(ENET0_GTX_CLK),
+    .phy0_txd(ENET0_TX_DATA),
+    .phy0_tx_ctl(ENET0_TX_EN),
+    .phy0_reset_n(ENET0_RST_N),
+    .phy0_int_n(ENET0_INT_N),
   );
 end entity patmos_top;
 

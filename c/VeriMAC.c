@@ -5,9 +5,7 @@
 int main(){
 	volatile _SPM int *uart_status = (volatile _SPM int *) 0xF0080000;
 	volatile _SPM int *uart_data = (volatile _SPM int *) 0xF0080004;
-	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00c0000;
-  	int val;
-	int i,j;
+	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00d0000;
 
 
 	for (;;) {
