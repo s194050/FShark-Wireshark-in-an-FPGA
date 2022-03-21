@@ -130,7 +130,7 @@ class FPGAsharkMAC extends CoreDevice() {
   ethmac1g.io.gtx_clk90 := clock
   ethmac1g.io.logic_clk := clock
   ethmac1g.io.logic_rst := reset
-
+  ethmac1g.io.ifg_delay := 12.U
 
 
   // Default response

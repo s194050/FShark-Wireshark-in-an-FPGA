@@ -60,7 +60,46 @@ architecture rtl of patmos_top is
       io_Keys_key : in  std_logic_vector(3 downto 0);
       io_UartCmp_tx  : out std_logic;
       io_UartCmp_rx  : in  std_logic;
-
+      --Clock and logic
+      io_gtx_clk : in std_logic;
+      io_gtx_clk90 : in std_logic;
+      io_gtx_rst : in std_logic;
+      io_logic_clk : in std_logic;
+      io logic_rst : in std_logic;
+      -- Axi input
+      io_tx_axis_tdata : in std_logic_vector(7 downto 0);
+      io_tx_axis_tkeep : in std_logic_vector(7 downto 0);
+      io_tx_axis_tvalid : in std_logic;
+      io_tx_axis_tready : out std_logic;
+      io_tx_axis_tlast : in std_logic;
+      io_tx_axis_tuser : in std_logic;
+      -- AXI output
+      io_rx_axis_tdata : out std_logic_vector(7 downto 0);
+      io_rx_axis_tkeep : out std_logic_vector(7 downto 0);
+      io_rx_axis_tvalid : out std_logic;
+      io_rx_axis_tready : in std_logic;
+      io_rx_axis_tlast : out std_logic;
+      io_rx_axis_tuser : out std_logic;
+      -- RGMII interface
+      io_rgmii_rx_clk : in std_logic;
+      io_rgmii_rxd : in std_logic_vector(3 downto 0);
+      io_rgmii_rx_ctl : in std_logic;
+      io_rgmii_tx_clk : out std_logic;
+      io_rgmii_txd : out std_logic_vector(3 downto 0);
+      io_rgmii_tx_ctl : out std_logic;
+      -- MAC status
+      io_tx_error_underflow : out std_logic;
+      io_tx_fifo_overflow : out std_logic;
+      io_tx_fifo_bad_frame : out std_logic;
+      io_tx_fifo_good_frame : out std_logic;
+      io_rx_error_bad_frame : out std_logic;
+      io_rx_error_bad_fcs : out std_logic;
+      io_rx_fifo_overflow : out std_logic;
+      io_rx_fifo_bad_frame : out std_logic;
+      io_rx_fifo_good_frame : out std_logic;
+      io_speed : out std_logic_vector(1 downto 0);
+      -- configuration
+      io_ifg_delay : in std_logic_vector(7 downto 0);
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -133,6 +172,15 @@ begin
         SRAM_DQ <= (others => 'Z');
       end if;
     end process;
+    -- Initiate verilog MAC
+    patmos_inst : Patmos port map(
+    io_rgmii_rx_clk => ENET0_RX_CLK;
+    io_rgmii_rxd => ENET0_RX_DATA;
+    io_rgmii_rx_ctl =>  ENET0_RX_DV;
+    io_rgmii_tx_clk => ENET0_TX_CLK;
+    io_rgmii_txd => ENET0_TX_DATA;
+    io_rgmii_tx_ctl => ENET0_TX_EN
+    );
 
     comp : Patmos port map(clk_int, int_res,
            oLedsPins_led,
