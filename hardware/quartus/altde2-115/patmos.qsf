@@ -99,6 +99,10 @@ set_location_assignment PIN_AF4 -to SRAM_DQ[1]
 set_location_assignment PIN_AH3 -to SRAM_DQ[0]
 set_location_assignment PIN_G12 -to iUartPins_rxd
 set_location_assignment PIN_G9 -to oUartPins_txd
+set_location_assignment PIN_AH23 -to iUart2Pins_rxd
+set_location_assignment PIN_AG26 -to oUart2Pins_txd
+set_location_assignment PIN_AF20 -to iUart3Pins_rxd
+set_location_assignment PIN_AH26 -to oUart3Pins_txd
 set_location_assignment PIN_F17 -to oLedsPins_led[8]
 set_location_assignment PIN_G21 -to oLedsPins_led[7]
 set_location_assignment PIN_G22 -to oLedsPins_led[6]
@@ -112,6 +116,14 @@ set_location_assignment PIN_R24 -to iKeysPins_key[3]
 set_location_assignment PIN_N21 -to iKeysPins_key[2]
 set_location_assignment PIN_M21 -to iKeysPins_key[1]
 set_location_assignment PIN_M23 -to iKeysPins_key[0]
+set_location_assignment PIN_AC15 -to oGpioPins_gpio_0[0]
+set_location_assignment PIN_Y17 -to oGpioPins_gpio_0[1]
+set_location_assignment PIN_Y16 -to oGpioPins_gpio_0[2]
+set_location_assignment PIN_AE16 -to oGpioPins_gpio_0[3]
+set_location_assignment PIN_AE15 -to oGpioPins_gpio_0[4]
+set_location_assignment PIN_AB21 -to oGpioPins_gpio_0[5]
+set_location_assignment PIN_AC21 -to oGpioPins_gpio_0[6]
+set_location_assignment PIN_AD21 -to oGpioPins_gpio_0[7]
 # Ethernet Pin-out
 #=================================================
 set_location_assignment PIN_A17 -to ENET0_GTX_CLK
@@ -173,31 +185,31 @@ set_global_assignment -name VHDL_FILE ../../vhdl/altera/cyc2_pll.vhd
 set_global_assignment -name VERILOG_FILE ../../build/Patmos.v
 set_global_assignment -name VERILOG_FILE ../../build/BlackBoxRom.v
 
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ocp/ocp_config.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ocp/ocp.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/util/math_util.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/config_types.vhd"
-set_global_assignment -name VHDL_FILE "../../vhdl/argo/config.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/argo_types.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/noc_interface.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/mem/tdp_ram.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/mem/tdp_bram.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/mem/com_spm.vhd"
-set_global_assignment -name VHDL_FILE "../../vhdl/argo/com_spm_wrapper.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/rx_unit.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/irq_fifo.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/config_bus.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/spm_bus.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/packet_manager.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/schedule_table.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/TDM_controller.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/MC_controller.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/ni/network_interface.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/routers/synchronous/xbar.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/routers/synchronous/hpu.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/routers/synchronous/router.vhd"
-set_global_assignment -name VHDL_FILE "../../../../argo/src/noc/synchronous/noc_node.vhd"
-set_global_assignment -name VHDL_FILE "../../vhdl/argo/noc_node_wrapper.vhd"
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ocp/ocp_config.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ocp/ocp.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/util/math_util.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/config_types.vhd
+set_global_assignment -name VHDL_FILE ../../vhdl/argo/config.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/argo_types.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/noc_interface.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/mem/tdp_ram.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/mem/tdp_bram.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/mem/com_spm.vhd
+set_global_assignment -name VHDL_FILE ../../vhdl/argo/com_spm_wrapper.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/rx_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/irq_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/config_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/spm_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/packet_manager.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/schedule_table.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/TDM_controller.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/MC_controller.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/ni/network_interface.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/routers/synchronous/xbar.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/routers/synchronous/hpu.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/routers/synchronous/router.vhd
+set_global_assignment -name VHDL_FILE ../../../../argo/src/noc/synchronous/noc_node.vhd
+set_global_assignment -name VHDL_FILE ../../vhdl/argo/noc_node_wrapper.vhd
 set_global_assignment -name VHDL_FILE ../../vhdl/fpu_double/comppack.vhd
 set_global_assignment -name VHDL_FILE ../../vhdl/fpu_double/fpupack.vhd
 set_global_assignment -name VHDL_FILE ../../vhdl/fpu_double/fpu_add.vhd
@@ -254,7 +266,6 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 # Ethernet
 #====================================================================
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET0_GTX_CLK
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET0_TX_DATA[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET0_RX_DATA[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET0_TX_DATA[1]
@@ -277,7 +288,6 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET0_MDC
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET0_MDIO
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ENET0_LINK100
 
-set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_GTX_CLK
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_TX_DATA[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_RX_DATA[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_TX_DATA[1]
@@ -364,5 +374,9 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to "Patmos:comp|SRamCtrl:
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to "Patmos:comp|SRamCtrl:ramCtrl|nweReg"
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to "Patmos:comp|SRamCtrl:ramCtrl|nlbReg"
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to "Patmos:comp|SRamCtrl:ramCtrl|nubReg"
+
+
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
 
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

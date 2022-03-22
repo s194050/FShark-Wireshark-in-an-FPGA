@@ -4,7 +4,7 @@
 -- License: Simplified BSD License
 --
 
--- clock c1 is 0 degrees phase shifted
+-- clock c1 is 180 degrees phase shifted
 -- clock c2 is  90 degrees phase shifted
 -- clock c3 is 270 degrees phase shifted
 
@@ -16,13 +16,7 @@ USE altera_mf.all;
 
 ENTITY pll IS
 	generic (input_freq: real; -- in MHz
-             multiply_by : natural; 
-				 divide_by : natural;
-				 
-				 clk1_multiply_by : natural;
-				 clk1_divide_by : natural;
-			    clk1_phase_shift : string
-				 );
+             multiply_by : natural; divide_by : natural);
 	PORT
 	(
 		inclk0		: IN STD_LOGIC  := '0';
@@ -134,14 +128,14 @@ BEGIN
 		clk0_duty_cycle => 50,
 		clk0_multiply_by => multiply_by,
 		clk0_phase_shift => "0",
-		clk1_divide_by => clk1_divide_by,
+		clk1_divide_by => divide_by,
 		clk1_duty_cycle => 50,
-		clk1_multiply_by => clk1_multiply_by,
-		clk1_phase_shift => "0",
-		clk2_divide_by => clk1_divide_by,
+		clk1_multiply_by => multiply_by,
+		clk1_phase_shift => integer'image(2*output_period/4),
+		clk2_divide_by => divide_by,
 		clk2_duty_cycle => 50,
-		clk2_multiply_by => clk1_multiply_by,
-		clk2_phase_shift => clk1_phase_shift,
+		clk2_multiply_by => multiply_by,
+		clk2_phase_shift => integer'image(1*output_period/4),
 		clk3_divide_by => divide_by,
 		clk3_duty_cycle => 50,
 		clk3_multiply_by => multiply_by,

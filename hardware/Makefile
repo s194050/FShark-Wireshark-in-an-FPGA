@@ -70,7 +70,7 @@ EXT_SLOT_SIZE?=5
 
 
 # build the C++ version
-emulator: 
+emulator:
 	$(MAKE) -C .. emulator BOOTBAPP=$(BOOTAPP)
 #emulator: $(HWBUILDDIR)/emulator
 
@@ -144,7 +144,7 @@ vsim: verilog
 	$(MAKE) -C modelsim sim
 
 #elaborate rtl with Quartus
-elab_quartus: 
+elab_quartus:
 	quartus_map quartus/$(BOARD)/patmos --analysis_and_elaboration
 
 rtl_quartus:
@@ -234,7 +234,7 @@ oneway:
 oneway_test:
 	$(SBT) "test:runMain oneway.OneWayMemTester"
 
-Network-test: 
+Network-test:
 	$(SBT) "test:runMain s4noc.NetworkTester"
 
 
@@ -250,4 +250,3 @@ twowayboard:
 
 twowayboard_test:
 	$(SBT) "test:runMain twoway.TwoWayBoardTester"
-

@@ -21,18 +21,13 @@ entity patmos_top is
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
     iUartPins_rxd : in  std_logic;
-	  oUart2Pins_txd : out   std_logic;
-    iUart2Pins_rxd : in    std_logic;
-    oUart3Pins_txd : out   std_logic;
-    iUart3Pins_rxd : in    std_logic;
-	  oGpioPins_gpio_0 : inout std_logic_vector(7 downto 0);
     oSRAM_A : out std_logic_vector(19 downto 0);
     SRAM_DQ : inout std_logic_vector(15 downto 0);
     oSRAM_CE_N : out std_logic;
     oSRAM_OE_N : out std_logic;
     oSRAM_WE_N : out std_logic;
     oSRAM_LB_N : out std_logic;
-    oSRAM_UB_N : out std_logic;
+    oSRAM_UB_N : out std_logic
 
     -- Phy0
     ENET0_RX_CLK : in std_logic;
@@ -51,7 +46,7 @@ entity patmos_top is
     ENET1_TX_DATA : out std_logic_vector(3 downto 0);
     ENET1_TX_EN : out std_logic;
     ENET1_RST_N : in std_logic;
-    ENET1_INT_N : in std_logic
+    ENET1_INT_N : in std_logic;
   );
 end entity patmos_top;
 
@@ -63,53 +58,48 @@ architecture rtl of patmos_top is
 
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
-		io_Gpio_gpios_0 : inout std_logic_vector(5 downto 0);
-      io_UartCmp_tx                    : out std_logic;
-		io_UartCmp_rx                    : in  std_logic;
-		io_Uart_tx                       : out std_logic;
-		io_Uart_rx                       : in  std_logic;
-		io_Uart_1_tx                     : out std_logic;
-		io_Uart_1_rx                     : in  std_logic;
-	   --Clock and logic
-      io_FPGAsharkMAC_gtx_clk : in std_logic;
-      io_FPGAsharkMAC_gtx_clk90 : in std_logic;
-      io_FPGAsharkMAC_gtx_rst : in std_logic;
-      --io_FPGAsharkMAC_logic_clk : in std_logic;
-      --io_FPGAsharkMAC_logic_rst : in std_logic;
+      io_UartCmp_tx  : out std_logic;
+      io_UartCmp_rx  : in  std_logic;
+      --Clock and logic
+      io_gtx_clk : in std_logic;
+      io_gtx_clk90 : in std_logic;
+      io_gtx_rst : in std_logic;
+      io_logic_clk : in std_logic;
+      io logic_rst : in std_logic;
       -- Axi input
-      --io_FPGAsharkMAC_tx_axis_tdata : in std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_tx_axis_tkeep : in std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_tx_axis_tvalid : in std_logic;
-      --io_FPGAsharkMAC_tx_axis_tready : out std_logic;
-      --io_FPGAsharkMAC_tx_axis_tlast : in std_logic;
-      --io_FPGAsharkMAC_tx_axis_tuser : in std_logic;
+      io_tx_axis_tdata : in std_logic_vector(7 downto 0);
+      io_tx_axis_tkeep : in std_logic_vector(7 downto 0);
+      io_tx_axis_tvalid : in std_logic;
+      io_tx_axis_tready : out std_logic;
+      io_tx_axis_tlast : in std_logic;
+      io_tx_axis_tuser : in std_logic;
       -- AXI output
-      --io_FPGAsharkMAC_rx_axis_tdata : out std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_rx_axis_tkeep : out std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_rx_axis_tvalid : out std_logic;
-      --io_FPGAsharkMAC_rx_axis_tready : in std_logic;
-      --io_FPGAsharkMAC_rx_axis_tlast : out std_logic;
-      --io_FPGAsharkMAC_rx_axis_tuser : out std_logic;
+      io_rx_axis_tdata : out std_logic_vector(7 downto 0);
+      io_rx_axis_tkeep : out std_logic_vector(7 downto 0);
+      io_rx_axis_tvalid : out std_logic;
+      io_rx_axis_tready : in std_logic;
+      io_rx_axis_tlast : out std_logic;
+      io_rx_axis_tuser : out std_logic;
       -- RGMII interface
-      io_FPGAsharkMAC_rgmii_rx_clk : in std_logic;
-      io_FPGAsharkMAC_rgmii_rxd : in std_logic_vector(3 downto 0);
-      io_FPGAsharkMAC_rgmii_rx_ctl : in std_logic;
-      io_FPGAsharkMAC_rgmii_tx_clk : out std_logic;
-      io_FPGAsharkMAC_rgmii_txd : out std_logic_vector(3 downto 0);
-      io_FPGAsharkMAC_rgmii_tx_ctl : out std_logic;
+      io_rgmii_rx_clk : in std_logic;
+      io_rgmii_rxd : in std_logic_vector(3 downto 0);
+      io_rgmii_rx_ctl : in std_logic;
+      io_rgmii_tx_clk : out std_logic;
+      io_rgmii_txd : out std_logic_vector(3 downto 0);
+      io_rgmii_tx_ctl : out std_logic;
       -- MAC status
-      --io_FPGAsharkMAC_tx_error_underflow : out std_logic;
-      --io_FPGAsharkMAC_tx_fifo_overflow : out std_logic;
-      --io_FPGAsharkMAC_tx_fifo_bad_frame : out std_logic;
-      --io_FPGAsharkMAC_tx_fifo_good_frame : out std_logic;
-      --io_FPGAsharkMAC_rx_error_bad_frame : out std_logic;
-      --io_FPGAsharkMAC_rx_error_bad_fcs : out std_logic;
-      --io_FPGAsharkMAC_rx_fifo_overflow : out std_logic;
-      --io_FPGAsharkMAC_rx_fifo_bad_frame : out std_logic;
-      --io_FPGAsharkMAC_rx_fifo_good_frame : out std_logic;
-      --io_FPGAsharkMAC_speed : out std_logic_vector(1 downto 0);
+      io_tx_error_underflow : out std_logic;
+      io_tx_fifo_overflow : out std_logic;
+      io_tx_fifo_bad_frame : out std_logic;
+      io_tx_fifo_good_frame : out std_logic;
+      io_rx_error_bad_frame : out std_logic;
+      io_rx_error_bad_fcs : out std_logic;
+      io_rx_fifo_overflow : out std_logic;
+      io_rx_fifo_bad_frame : out std_logic;
+      io_rx_fifo_good_frame : out std_logic;
+      io_speed : out std_logic_vector(1 downto 0);
       -- configuration
-      --io_FPGAsharkMAC_ifg_delay : in std_logic_vector(7 downto 0);
+      io_ifg_delay : in std_logic_vector(7 downto 0);
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -126,8 +116,8 @@ architecture rtl of patmos_top is
   -- DE2-70: 50 MHz clock => 80 MHz
   -- BeMicro: 16 MHz clock => 25.6 MHz
   constant pll_infreq : real    := 50.0;
-  constant pll_mult   : natural := 8; --8
-  constant pll_div    : natural := 5; --5
+  constant pll_mult   : natural := 5; --8
+  constant pll_div    : natural := 2; --5
 
   constant clk1_mult   : natural := 5;
   constant clk1_div    : natural := 2;
@@ -217,7 +207,7 @@ begin
     io_FPGAsharkMAC_rgmii_rx_clk => ENET0_RX_CLK,
     io_FPGAsharkMAC_rgmii_rxd => ENET0_RX_DATA,
     io_FPGAsharkMAC_rgmii_rx_ctl =>  ENET0_RX_DV,
-    io_FPGAsharkMAC_rgmii_tx_clk => ENET0_GTX_CLK,
+    io_FPGAsharkMAC_rgmii_tx_clk => ENET0_TX_CLK,
     io_FPGAsharkMAC_rgmii_txd => ENET0_TX_DATA,
     io_FPGAsharkMAC_rgmii_tx_ctl => ENET0_TX_EN,
 
