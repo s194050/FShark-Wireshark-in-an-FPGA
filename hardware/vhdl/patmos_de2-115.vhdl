@@ -116,8 +116,8 @@ architecture rtl of patmos_top is
   -- DE2-70: 50 MHz clock => 80 MHz
   -- BeMicro: 16 MHz clock => 25.6 MHz
   constant pll_infreq : real    := 50.0;
-  constant pll_mult   : natural := 8;
-  constant pll_div    : natural := 5;
+  constant pll_mult   : natural := 5; --8
+  constant pll_div    : natural := 2; --5
 
   constant clk1_mult   : natural := 5;
   constant clk1_div    : natural := 2;
@@ -152,7 +152,7 @@ begin
     port map(
       inclk0 => clk,
       c0     => clk_int,
-      c1     => clk_125,
+      --c1     => clk_125,
       c2     => clk_125_90
     );
   -- we use a PLL
@@ -189,7 +189,7 @@ begin
     patmos_inst : Patmos port map(
     clock => clk_int,
     reset => int_res,
-    io_FPGAsharkMAC_gtx_clk => clk_125,
+    io_FPGAsharkMAC_gtx_clk => clk_int, -- clk_125
     io_FPGAsharkMAC_gtx_clk90 => clk_125_90,
     io_FPGAsharkMAC_gtx_rst =>  int_res,
 
