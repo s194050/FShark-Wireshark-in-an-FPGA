@@ -125,9 +125,9 @@ class FPGAsharkMAC extends CoreDevice() {
   val ethmac1g = Module(new eth_mac_1gBB())
   // Connect the pins straight through
   io.pins <> ethmac1g.io
-  ethmac1g.io.gtx_clk := clock
-  ethmac1g.io.gtx_rst := reset
-  ethmac1g.io.gtx_clk90 := clock
+  ethmac1g.io.gtx_clk := io.pins.gtx_clk
+  ethmac1g.io.gtx_rst := io.pins.gtx_rst
+  ethmac1g.io.gtx_clk90 := io.pins.gtx_clk90
   ethmac1g.io.logic_clk := clock
   ethmac1g.io.logic_rst := reset
   ethmac1g.io.ifg_delay := 12.U

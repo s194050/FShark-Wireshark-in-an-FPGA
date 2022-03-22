@@ -18,8 +18,13 @@ ENTITY pll IS
 	generic (
 		device_fam: string := "Cyclone II";
 		input_freq: real; -- in MHz
-		multiply_by : natural; 
-		divide_by : natural);
+		multiply_by : natural;
+		divide_by : natural;
+
+		clk1_multiply_by : natural;
+		clk1_divide_by : natural;
+		clk1_phase_shift : string
+		);
 	PORT
 	(
 		inclk0		: IN STD_LOGIC  := '0';
@@ -27,7 +32,7 @@ ENTITY pll IS
 		c1		: OUT STD_LOGIC;
 		c2		: OUT STD_LOGIC;
 		c3		: OUT STD_LOGIC;
-		locked		: OUT STD_LOGIC 
+		locked		: OUT STD_LOGIC
 	);
 END pll;
 
@@ -36,7 +41,7 @@ ARCHITECTURE SYN OF pll IS
 	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (1 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (5 DOWNTO 0);
 	SIGNAL sub_wire2	: STD_LOGIC ;
-    
+
     constant output_period : integer
         := integer(1000000.0/(input_freq*real(multiply_by)/real(divide_by)));
 
@@ -112,7 +117,7 @@ ARCHITECTURE SYN OF pll IS
 	PORT (
 			clk	: OUT STD_LOGIC_VECTOR (5 DOWNTO 0);
 			inclk	: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-			locked	: OUT STD_LOGIC 
+			locked	: OUT STD_LOGIC
 	);
 	END COMPONENT;
 
@@ -131,14 +136,14 @@ BEGIN
 		clk0_duty_cycle => 50,
 		clk0_multiply_by => multiply_by,
 		clk0_phase_shift => "0",
-		clk1_divide_by => divide_by,
+		clk1_divide_by => clk1_divide_by,
 		clk1_duty_cycle => 50,
-		clk1_multiply_by => multiply_by,
-		clk1_phase_shift => integer'image(2*output_period/4),
-		clk2_divide_by => divide_by,
+		clk1_multiply_by => clk1_multiply_by,
+		clk1_phase_shift => "0",
+		clk2_divide_by => clk1_divide_by,
 		clk2_duty_cycle => 50,
-		clk2_multiply_by => multiply_by,
-		clk2_phase_shift => integer'image(1*output_period/4),
+		clk2_multiply_by => clk1_multiply_by,
+		clk2_phase_shift => clk1_phase_shift,
 		clk3_divide_by => divide_by,
 		clk3_duty_cycle => 50,
 		clk3_multiply_by => multiply_by,
@@ -203,4 +208,3 @@ BEGIN
 
 
 END SYN;
-
