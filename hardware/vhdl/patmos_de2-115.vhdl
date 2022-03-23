@@ -63,13 +63,9 @@ architecture rtl of patmos_top is
 
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
-		  io_Gpio_gpios_0 : inout std_logic_vector(5 downto 0);
       io_UartCmp_tx                    : out std_logic;
 		  io_UartCmp_rx                    : in  std_logic;
-		  io_Uart_tx                       : out std_logic;
-  		io_Uart_rx                       : in  std_logic;
-  		io_Uart_1_tx                     : out std_logic;
-  		io_Uart_1_rx                     : in  std_logic;
+
 	   --Clock and logic
       io_FPGAsharkMAC_gtx_clk : in std_logic;
       io_FPGAsharkMAC_gtx_clk90 : in std_logic;
@@ -176,14 +172,8 @@ begin
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
-    io_Gpio_gpios_0(4 downto 0) => oGpioPins_gpio_0(4 downto 0),
     io_UartCmp_tx => oUartPins_txd,
     io_UartCmp_rx => iUartPins_rxd,
-    io_Uart_tx => oUart2Pins_txd,
-    io_Uart_rx => iUart2Pins_rxd,
-    io_Uart_1_tx => oUart3Pins_txd,
-    io_Uart_1_rx => iUart3Pins_rxd,
-
 
     io_FPGAsharkMAC_rgmii_rx_clk => ENET0_RX_CLK,
     io_FPGAsharkMAC_rgmii_rxd => ENET0_RX_DATA,
