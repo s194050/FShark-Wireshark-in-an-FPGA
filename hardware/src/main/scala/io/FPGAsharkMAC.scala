@@ -22,24 +22,6 @@ object FPGAsharkMAC extends DeviceObject {
       val gtx_clk = Input(Clock())
       val gtx_clk90 = Input(Clock())
       val gtx_rst = Input(Bool())
-      val logic_clk = Input(Clock())
-      val logic_rst = Input(Bool())
-      // AXI Input
-      //----------
-      val tx_axis_tdata = Input(UInt(8.W))
-      val tx_axis_tkeep = Input(UInt(8.W))
-      val tx_axis_tvalid = Input(Bool())
-      val tx_axis_tready = Output(Bool())
-      val tx_axis_tlast = Input(Bool())
-      val tx_axis_tuser = Input(Bool())
-      //AXI Output
-      //----------
-      val rx_axis_tdata = Output(UInt(8.W))
-      val rx_axis_tkeep = Output(UInt(8.W))
-      val rx_axis_tvalid = Output(Bool())
-      val rx_axis_tready = Input(Bool())
-      val rx_axis_tlast = Output(Bool())
-      val rx_axis_tuser = Output(Bool())
       //RGMII interface
       //---------------
       val rgmii_rx_clk = Input(Clock())
@@ -48,21 +30,6 @@ object FPGAsharkMAC extends DeviceObject {
       val rgmii_tx_clk = Output(Clock())
       val rgmii_txd = Output(UInt(4.W))
       val rgmii_tx_ctl = Output(Bool())
-      //Status
-      //------
-      val tx_error_underflow = Output(Bool())
-      val tx_fifo_overflow = Output(Bool())
-      val tx_fifo_bad_frame = Output(Bool())
-      val tx_fifo_good_frame = Output(Bool())
-      val rx_error_bad_frame = Output(Bool())
-      val rx_error_bad_fcs = Output(Bool())
-      val rx_fifo_overflow = Output(Bool())
-      val rx_fifo_bad_frame = Output(Bool())
-      val rx_fifo_good_frame = Output(Bool())
-      val speed = Output(UInt(2.W))
-      //Configuration
-      //-------------
-      val ifg_delay = Input(UInt(8.W))
     }
   }
 }
@@ -124,13 +91,22 @@ class FPGAsharkMAC extends CoreDevice() {
   override val io = IO(new CoreDeviceIO() with FPGAsharkMAC.Pins {})
   val ethmac1g = Module(new eth_mac_1gBB())
   // Connect the pins straight through
-  io.pins <> ethmac1g.io
+  // Clock and logic
   ethmac1g.io.gtx_clk := io.pins.gtx_clk
   ethmac1g.io.gtx_rst := io.pins.gtx_rst
   ethmac1g.io.gtx_clk90 := io.pins.gtx_clk90
   ethmac1g.io.logic_clk := clock
   ethmac1g.io.logic_rst := reset
-  ethmac1g.io.ifg_delay := 12.U
+  // Configuration
+  ethmac1g.io.ifg_delay := WireInit(12.U(8.W))
+  // RGMII Interface
+  ethmac1g.io.rgmii_rx_clk := io.pins.rgmii_rx_clk
+  ethmac1g.io.rgmii_rxd := io.pins.rgmii_rxd
+  ethmac1g.io.rgmii_rx_ctl := io.pins.rgmii_rx_ctl
+  io.pins.rgmii_tx_clk := ethmac1g.io.rgmii_tx_clk
+  io.pins.rgmii_txd := ethmac1g.io.rgmii_txd
+  io.pins.rgmii_tx_ctl := ethmac1g.io.rgmii_tx_ctl
+
 
 
   // Default response

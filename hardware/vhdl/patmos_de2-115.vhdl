@@ -21,11 +21,11 @@ entity patmos_top is
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
     iUartPins_rxd : in  std_logic;
-	 oUart2Pins_txd : out   std_logic;
+	  oUart2Pins_txd : out   std_logic;
     iUart2Pins_rxd : in    std_logic;
     oUart3Pins_txd : out   std_logic;
     iUart3Pins_rxd : in    std_logic;
-	 oGpioPins_gpio_0 : inout std_logic_vector(7 downto 0);
+	  oGpioPins_gpio_0 : inout std_logic_vector(7 downto 0);
     oSRAM_A : out std_logic_vector(19 downto 0);
     SRAM_DQ : inout std_logic_vector(15 downto 0);
     oSRAM_CE_N : out std_logic;
@@ -74,22 +74,6 @@ architecture rtl of patmos_top is
       io_FPGAsharkMAC_gtx_clk : in std_logic;
       io_FPGAsharkMAC_gtx_clk90 : in std_logic;
       io_FPGAsharkMAC_gtx_rst : in std_logic;
-      --io_FPGAsharkMAC_logic_clk : in std_logic;
-      --io_FPGAsharkMAC_logic_rst : in std_logic;
-      -- Axi input
-      --io_FPGAsharkMAC_tx_axis_tdata : in std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_tx_axis_tkeep : in std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_tx_axis_tvalid : in std_logic;
-      --io_FPGAsharkMAC_tx_axis_tready : out std_logic;
-      --io_FPGAsharkMAC_tx_axis_tlast : in std_logic;
-      --io_FPGAsharkMAC_tx_axis_tuser : in std_logic;
-      -- AXI output
-      --io_FPGAsharkMAC_rx_axis_tdata : out std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_rx_axis_tkeep : out std_logic_vector(7 downto 0);
-      --io_FPGAsharkMAC_rx_axis_tvalid : out std_logic;
-      --io_FPGAsharkMAC_rx_axis_tready : in std_logic;
-      --io_FPGAsharkMAC_rx_axis_tlast : out std_logic;
-      --io_FPGAsharkMAC_rx_axis_tuser : out std_logic;
       -- RGMII interface
       io_FPGAsharkMAC_rgmii_rx_clk : in std_logic;
       io_FPGAsharkMAC_rgmii_rxd : in std_logic_vector(3 downto 0);
@@ -97,19 +81,6 @@ architecture rtl of patmos_top is
       io_FPGAsharkMAC_rgmii_tx_clk : out std_logic;
       io_FPGAsharkMAC_rgmii_txd : out std_logic_vector(3 downto 0);
       io_FPGAsharkMAC_rgmii_tx_ctl : out std_logic;
-      -- MAC status
-      --io_FPGAsharkMAC_tx_error_underflow : out std_logic;
-      --io_FPGAsharkMAC_tx_fifo_overflow : out std_logic;
-      --io_FPGAsharkMAC_tx_fifo_bad_frame : out std_logic;
-      --io_FPGAsharkMAC_tx_fifo_good_frame : out std_logic;
-      --io_FPGAsharkMAC_rx_error_bad_frame : out std_logic;
-      --io_FPGAsharkMAC_rx_error_bad_fcs : out std_logic;
-      --io_FPGAsharkMAC_rx_fifo_overflow : out std_logic;
-      --io_FPGAsharkMAC_rx_fifo_bad_frame : out std_logic;
-      --io_FPGAsharkMAC_rx_fifo_good_frame : out std_logic;
-      --io_FPGAsharkMAC_speed : out std_logic_vector(1 downto 0);
-      -- configuration
-      --io_FPGAsharkMAC_ifg_delay : in std_logic_vector(7 downto 0);
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -162,7 +133,7 @@ begin
     port map(
       inclk0 => clk,
       c0     => clk_int,
-      --c1     => clk_125,
+      c1     => clk_125,
       c2     => clk_125_90
     );
   -- we use a PLL
@@ -199,7 +170,7 @@ begin
     patmos_inst : Patmos port map(
     clock => clk_int,
     reset => int_res,
-    io_FPGAsharkMAC_gtx_clk => clk_int, -- clk_125
+    io_FPGAsharkMAC_gtx_clk => clk_125,
     io_FPGAsharkMAC_gtx_clk90 => clk_125_90,
     io_FPGAsharkMAC_gtx_rst =>  int_res,
 
@@ -220,6 +191,7 @@ begin
     io_FPGAsharkMAC_rgmii_tx_clk => ENET0_GTX_CLK,
     io_FPGAsharkMAC_rgmii_txd => ENET0_TX_DATA,
     io_FPGAsharkMAC_rgmii_tx_ctl => ENET0_TX_EN,
+
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,
     io_SRamCtrl_ramOut_doutEna => sram_out_dout_ena,
