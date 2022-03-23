@@ -45,6 +45,8 @@ class Emulator
   VerilatedVcdC	*c_trace;
   // For Uart:
   bool UART_on;
+  // RGMII
+  bool RGMII_on;
   int baudrate;
   int freq;
   char in_byte;
@@ -145,20 +147,9 @@ public:
     c->reset = 0;
   }
 
-  long int mintime(){
+  unsigned long mintime(){
     // Function to find mintime of the three clocks
     return std::min(std::min(c80,c125),c125_90);
-    /*if(c80 <= c125 && c80 <= c125_90){
-      return c80;
-    }
-    if(c125 <= c80 && c125 <= c125_90){
-      return c125;
-    }
-    if(c125_90 <= c80 && c125_90 <= c125){
-      return c125_90;
-    }
-    return -1;
-    */
   }
 
   void tick(int uart_in,int uart_out)
@@ -182,17 +173,17 @@ public:
       c125 -= inc_time;
       c125_90 -= inc_time;
 
-      if(c80 == 0){
+      if(c80 == 0){ // 80 MHz clock
         c80 = c80_period;
         c->clock = 0;
         c80_zeroed = true;
       }
 
-      if(c125 == 0){
+      if(c125 == 0){ // 125 MHz clock
         c125 = c125_period;
         c->io_FPGAsharkMAC_gtx_clk = !c->io_FPGAsharkMAC_gtx_clk;
       }
-      if(c125_90 == 0){
+      if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
         c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
       }
@@ -232,6 +223,11 @@ public:
       }
     }
 
+    //RGMII emulation
+
+
+
+
     //UART emulation
     if (UART_on)
     {
@@ -257,6 +253,13 @@ public:
     baudrate = BAUDRATE;
     freq = FREQ;
     UART_on = true;
+  }
+
+  void RGMII_init()
+  {
+    baudrate = BAUDRATE;
+    freq = FREQ;
+    RGMII_on = true;
   }
 
 
@@ -977,6 +980,10 @@ static void help(ostream &out) {
       << "  -I <file>     Read input for UART from file <file>" << endl
       << "  -O <file>     Write output from UART to file <file>" << endl
       #endif
+      #ifdef IO_RGMII
+      << "   -L <file>    Read input from file for RGMII <file>" << endl
+      << "   -S <file>    Write output to file for RGMII <file>" << endl
+      #endif
   ;
 }
 
@@ -992,6 +999,8 @@ int main(int argc, char **argv, char **env)
 
   int uart_in = STDIN_FILENO;
   int uart_out = STDOUT_FILENO;
+  int RGMII_in = STDIN_FILENO;
+  int RGMII_out = STDOUT_FILENO;
   bool keys = false;
 
   //Parse Arguments
@@ -1024,6 +1033,30 @@ int main(int argc, char **argv, char **env)
         } else {
           uart_out = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 0644);
           if (uart_out < 0) {
+            cerr << argv[0] << ": error: Cannot open output file " << optarg << endl;
+            exit(EXIT_FAILURE);
+          }
+        }
+        break;
+      #endif
+      #ifdef IO_RGMII
+      case 'L':
+        if (strcmp(optarg, "-") == 0) {
+          RGMII_in = STDIN_FILENO;
+        } else {
+          RGMII_in = open(optarg, O_RDONLY);
+          if (RGMII_in < 0) {
+            cerr << argv[0] << "error: Cannot open input file " << optarg << endl;
+            exit(EXIT_FAILURE);
+          }
+        }
+        break;
+      case 'S':
+        if (strcmp(optarg, "-") == 0) {
+          RGMII_out = STDOUT_FILENO;
+        } else {
+          RGMII_out = open(optarg, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+          if (RGMII_out < 0) {
             cerr << argv[0] << ": error: Cannot open output file " << optarg << endl;
             exit(EXIT_FAILURE);
           }
