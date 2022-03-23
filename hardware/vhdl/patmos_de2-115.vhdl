@@ -21,11 +21,11 @@ entity patmos_top is
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
     iUartPins_rxd : in  std_logic;
-	  oUart2Pins_txd : out   std_logic;
+	 oUart2Pins_txd : out   std_logic;
     iUart2Pins_rxd : in    std_logic;
     oUart3Pins_txd : out   std_logic;
     iUart3Pins_rxd : in    std_logic;
-	  oGpioPins_gpio_0 : inout std_logic_vector(7 downto 0);
+	 oGpioPins_gpio_0 : inout std_logic_vector(7 downto 0);
     oSRAM_A : out std_logic_vector(19 downto 0);
     SRAM_DQ : inout std_logic_vector(15 downto 0);
     oSRAM_CE_N : out std_logic;
@@ -63,13 +63,13 @@ architecture rtl of patmos_top is
 
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
-		io_Gpio_gpios_0 : inout std_logic_vector(5 downto 0);
+		  io_Gpio_gpios_0 : inout std_logic_vector(5 downto 0);
       io_UartCmp_tx                    : out std_logic;
-		io_UartCmp_rx                    : in  std_logic;
-		io_Uart_tx                       : out std_logic;
-		io_Uart_rx                       : in  std_logic;
-		io_Uart_1_tx                     : out std_logic;
-		io_Uart_1_rx                     : in  std_logic;
+		  io_UartCmp_rx                    : in  std_logic;
+		  io_Uart_tx                       : out std_logic;
+  		io_Uart_rx                       : in  std_logic;
+  		io_Uart_1_tx                     : out std_logic;
+  		io_Uart_1_rx                     : in  std_logic;
 	   --Clock and logic
       io_FPGAsharkMAC_gtx_clk : in std_logic;
       io_FPGAsharkMAC_gtx_clk90 : in std_logic;

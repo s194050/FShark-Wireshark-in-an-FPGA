@@ -1,8 +1,8 @@
-/* 
+/*
 NOTES ON STUFF MISSING FROM THE OLD EMULATOR
 - generating the emulator_config. These care hardcoded below for now
 - VCD dump
-- init_extmem - should not be needed as the current state of the new emulator 
+- init_extmem - should not be needed as the current state of the new emulator
   uses hashmap for memory. Only for testing width of data channel to memory.
   but i haven't found a way to get signal width from verilator.
 
@@ -59,15 +59,23 @@ class Emulator
   int write_cntr;
   int write_len;
   bool trace;
+  // For multi-clock simulation
+  const int c80_period =  12500/2;
+  const int c125_period = 8000/2;
+  const int c125_90_period = 8000/2;
+  unsigned long c80 = c80_period;
+  unsigned long c125 = c125_period;
+  unsigned long c125_90 = c125_90_period + c125_90_period*0.5;
+
   ostream *outputTarget = &std::cout;
 
   //elf - mem - ram
   #ifdef EXTMEM_SSRAM32CTRL
-  uint32_t *ram_buf; 
+  uint32_t *ram_buf;
   #endif /* EXTMEM_SSRAM32CTRL */
 
   #ifdef EXTMEM_SRAMCTRL
-  uint16_t *ram_buf; 
+  uint16_t *ram_buf;
   #endif /* EXTMEM_SRAMCTRL */
 
 public:
@@ -91,7 +99,7 @@ public:
     #endif /* EXTMEM_SRAMCTRL */
 
     trace = false;
-    
+
   }
 
   ~Emulator(void)
@@ -137,6 +145,22 @@ public:
     c->reset = 0;
   }
 
+  long int mintime(){
+    // Function to find mintime of the three clocks
+    return std::min(std::min(c80,c125),c125_90);
+    /*if(c80 <= c125 && c80 <= c125_90){
+      return c80;
+    }
+    if(c125 <= c80 && c125 <= c125_90){
+      return c125;
+    }
+    if(c125_90 <= c80 && c125_90 <= c125){
+      return c125_90;
+    }
+    return -1;
+    */
+  }
+
   void tick(int uart_in,int uart_out)
   {
     // Increment our own internal time reference
@@ -145,16 +169,68 @@ public:
     // Make sure any combinatorial logic depending upon
     // inputs that may have changed before we called tick()
     // has settled before the rising edge of the clock.
-    c->clock = 0;
-    c->eval();
+    unsigned long time = 0; // Global time tracker
 
-    if (trace) {
-      c_trace->dump(10*m_tickcount+5);
+    bool c80_zeroed = false; // Flag to register whether c80 is at 0
+    // This while loop adds the functionallity of simulating with
+    // multiple clocks. It keeps track of the individual clocks
+    // and at which point they need to be clocked.
+    while(!c80_zeroed){
+      unsigned long inc_time = mintime();
+      time += inc_time;
+      c80 -= inc_time;
+      c125 -= inc_time;
+      c125_90 -= inc_time;
+
+      if(c80 == 0){
+        c80 = c80_period;
+        c->clock = 0;
+        c80_zeroed = true;
+      }
+
+      if(c125 == 0){
+        c125 = c125_period;
+        c->io_FPGAsharkMAC_gtx_clk = !c->io_FPGAsharkMAC_gtx_clk;
+      }
+      if(c125_90 == 0){
+        c125_90 = c125_90_period;
+        c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
+      }
+      c->eval();
+      if (trace) {
+        c_trace->dump((c80_period*2)*m_tickcount+time+1);
+      }
     }
     // Toggle the clock
     // Rising edge
-    c->clock = 1;
-    c->eval();
+    c80_zeroed = false;
+    // Does the same as above, but for the rising edge case
+    while(!c80_zeroed){
+      unsigned long inc_time = mintime();
+      time += inc_time;
+      c80 -= inc_time;
+      c125 -= inc_time;
+      c125_90 -= inc_time;
+
+      if(c80 == 0){
+        c80 = c80_period;
+        c->clock = 1;
+        c80_zeroed = true;
+      }
+
+      if(c125 == 0){
+        c125 = c125_period;
+        c->io_FPGAsharkMAC_gtx_clk = !c->io_FPGAsharkMAC_gtx_clk;
+      }
+      if(c125_90 == 0){
+        c125_90 = c125_90_period;
+        c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
+      }
+      c->eval();
+      if (trace && !c80_zeroed) {
+        c_trace->dump((c80_period*2)*m_tickcount+time+2);
+      }
+    }
 
     //UART emulation
     if (UART_on)
@@ -163,7 +239,7 @@ public:
     }
 
     if (trace) {
-      c_trace->dump(10*m_tickcount+10);
+      c_trace->dump((c80_period*2)*m_tickcount+time+3);
       c_trace->flush();
     }
   }
@@ -330,10 +406,10 @@ public:
           {
             // Address maps to ISPM and is at a word boundary
 
-            val_t word = k >= phdr.p_filesz ? 0 : 
+            val_t word = k >= phdr.p_filesz ? 0 :
               (((val_t)elfbuf[phdr.p_offset + k + 0] << 24) |
                ((val_t)elfbuf[phdr.p_offset + k + 1] << 16) |
-               ((val_t)elfbuf[phdr.p_offset + k + 2] << 8) | 
+               ((val_t)elfbuf[phdr.p_offset + k + 2] << 8) |
                ((val_t)elfbuf[phdr.p_offset + k + 3] << 0));
             val_t addr = ((phdr.p_paddr + k) - (0x1 << OCMEM_ADDR_BITS)) >> 3;
             #if CORE_COUNT == 1
@@ -345,12 +421,12 @@ public:
                              sizeof(c->__PVT__Patmos__DOT__cores_0->__PVT__fetch__DOT__MemBlock__DOT__mem[0]));
             #endif
             assert(addr < size && "Instructions mapped to ISPM exceed size");
-  
+
             // Write to even or odd block
             #if CORE_COUNT == 1
             if (((phdr.p_paddr + k) & 0x4) == 0)
             {
-              
+
               c->Patmos__DOT__cores_0__DOT__fetch__DOT__MemBlock__DOT__mem[addr] = word;
             }
             else
@@ -403,7 +479,7 @@ public:
     for (int i = 0; i < (1 << EXTMEM_ADDR_BITS); i++) {
       write_extmem(i, rand());
     }
-  } 
+  }
 
 static void emu_extmem() {
   static uint32_t addr_cnt;
@@ -491,7 +567,7 @@ void emu_extmem() {}
 
   void init_icache(val_t entry)
   {
-    
+
     tick(STDIN_FILENO, STDOUT_FILENO);
     if (entry != 0)
     {
@@ -506,7 +582,7 @@ void emu_extmem() {}
         c->Patmos__DOT__cores_0__DOT__icache__DOT__repl__DOT__hitNext = 0;
 // add multicore support, at the moment only for the method cache and not the ISPM
 #endif
-       
+
 
 #if CORE_COUNT > 1
         c->__PVT__Patmos__DOT__cores_0->fetch__DOT__pcReg = -1;
@@ -734,11 +810,11 @@ void emu_extmem() {}
         c->__PVT__Patmos__DOT__cores_0->fetch__DOT__relocNext = 0x10000 >> 2;
         c->__PVT__Patmos__DOT__cores_0->fetch__DOT__selSpmNext = 1;
         c->__PVT__Patmos__DOT__cores_0->icache__DOT__repl__DOT__selSpmNext = 1;
-#endif 
+#endif
       }
 #if CORE_COUNT == 1
       c->Patmos__DOT__cores_0__DOT__icache__DOT__repl__DOT__callRetBaseNext = (entry >> 2);
-#endif 
+#endif
 #if CORE_COUNT > 1
       c->__PVT__Patmos__DOT__cores_0->icache__DOT__repl__DOT__callRetBaseNext = (entry >> 2);
 
@@ -790,7 +866,7 @@ void emu_extmem() {}
 #ifdef ICACHE_METHOD
 #if CORE_COUNT == 1
       c->Patmos__DOT__cores_0__DOT__icache__DOT__ctrl__DOT__callRetBaseNext = (entry >> 2);
-#endif 
+#endif
 #if CORE_COUNT > 1
       c->__PVT__Patmos__DOT__cores_0->icache__DOT__ctrl__DOT__callRetBaseNext = (entry >> 2);
 
@@ -871,7 +947,7 @@ void emu_extmem() {}
 
     *outputTarget << endl;
   }
-  
+
 };
 
 // Override Verilator definition so first $finish ends simulation
@@ -897,13 +973,13 @@ static void help(ostream &out) {
       #ifdef IO_KEYS
       << "  -k            Simulate random input from keys" << endl
       #endif /* IO_KEYS */
-      #ifdef IO_UART      
+      #ifdef IO_UART
       << "  -I <file>     Read input for UART from file <file>" << endl
       << "  -O <file>     Write output from UART to file <file>" << endl
       #endif
   ;
 }
-   
+
 
 int main(int argc, char **argv, char **env)
 {
@@ -917,7 +993,7 @@ int main(int argc, char **argv, char **env)
   int uart_in = STDIN_FILENO;
   int uart_out = STDOUT_FILENO;
   bool keys = false;
-  
+
   //Parse Arguments
   while ((opt = getopt(argc, argv, "hvl:iO:I:rk")) != -1){
     switch (opt) {
@@ -973,7 +1049,7 @@ int main(int argc, char **argv, char **env)
     }
   }
 
-  
+
   emu->reset(1);
   emu->tick(uart_in, uart_out);
   emu->UART_init();
@@ -1040,5 +1116,3 @@ int main(int argc, char **argv, char **env)
   emu->stopTrace();
   exit(EXIT_SUCCESS);
 }
-
-
