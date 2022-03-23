@@ -203,17 +203,17 @@ public:
       c125 -= inc_time;
       c125_90 -= inc_time;
 
-      if(c80 == 0){
+      if(c80 == 0){ // 80 MHz clock
         c80 = c80_period;
         c->clock = 1;
         c80_zeroed = true;
       }
 
-      if(c125 == 0){
+      if(c125 == 0){ // 125 MHz clock
         c125 = c125_period;
         c->io_FPGAsharkMAC_gtx_clk = !c->io_FPGAsharkMAC_gtx_clk;
       }
-      if(c125_90 == 0){
+      if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
         c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
       }
