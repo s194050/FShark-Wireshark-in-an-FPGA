@@ -94,7 +94,7 @@ public:
 
     //for RGMII
     RGMII_on = false;
-    c->io_FPGAsharkMAC_rgmii_rxd = 1; // keep RGMII tx high when idle
+    c->io_FPGAsharkMAC_rgmii_txd = 1; // keep RGMII tx high when idle
 
     #ifdef EXTMEM_SSRAM32CTRL
     ram_buf = (uint32_t *)calloc(1 << EXTMEM_ADDR_BITS, sizeof(uint32_t));
@@ -220,7 +220,7 @@ public:
       if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
         c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
-        if (RGMII_on)
+        if (RGMII_on) //Check for RGMII emulation each 125MHz tick
         {
           emu_RGMII(RGMII_in, RGMII_out);
         }
@@ -231,11 +231,6 @@ public:
       }
 
     }
-
-    //RGMII emulation
-
-
-
 
     //UART emulation
     if (UART_on)
@@ -326,11 +321,11 @@ public:
     }
    */
     // Pass on data to RGMII
-    bool baud_tick = c->io_FPGAsharkMAC_gtx_clk;
+    bool baud_tick = c->io_FPGAsharkMAC_gtx_clk90;
     if (baud_tick) {
       baud_counter = (baud_counter + 1) % 10;
+      c->io_FPGAsharkMAC_rgmii_rx_clk = 0;
     }
-    c->io_FPGAsharkMAC_rgmii_rx_clk = 0;
     if (baud_tick && baud_counter == 0) {
       struct pollfd pfd;
       pfd.fd = RGMII_in;
@@ -342,9 +337,9 @@ public:
           if (r != 1) {
             cerr << "patemu: error: Cannot read RGMII input" << endl;
           } else {
-            c->io_FPGAsharkMAC_rgmii_rx_ctl = 0x3; // rx_stop_bit
-            c->io_FPGAsharkMAC_rgmii_rx_clk = 1;
-            c->io_FPGAsharkMAC_rgmii_rxd = d;
+            c->io_FPGAsharkMAC_rgmii_tx_ctl = 0x3; // rx_stop_bit
+            c->io_FPGAsharkMAC_rgmii_tx_clk = 1;
+            c->io_FPGAsharkMAC_rgmii_txd = d;
           }
         }
       }
