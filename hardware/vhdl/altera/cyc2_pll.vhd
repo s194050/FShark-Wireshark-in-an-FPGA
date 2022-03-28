@@ -17,11 +17,10 @@ USE altera_mf.all;
 ENTITY pll IS
 	generic (input_freq: real; -- in MHz
              multiply_by : natural; 
-				 divide_by : natural;
+	     divide_by : natural;
 				 
-				 clk1_multiply_by : natural;
-				 clk1_divide_by : natural;
-			    clk1_phase_shift : string
+	     clk1_multiply_by : natural;
+	     clk1_divide_by : natural
 				 );
 	PORT
 	(
@@ -141,7 +140,7 @@ BEGIN
 		clk2_divide_by => clk1_divide_by,
 		clk2_duty_cycle => 50,
 		clk2_multiply_by => clk1_multiply_by,
-		clk2_phase_shift => clk1_phase_shift,
+		clk2_phase_shift => integer'image(1*output_period/4),
 		clk3_divide_by => divide_by,
 		clk3_duty_cycle => 50,
 		clk3_multiply_by => multiply_by,

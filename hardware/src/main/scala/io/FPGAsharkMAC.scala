@@ -108,7 +108,6 @@ class FPGAsharkMAC extends CoreDevice() {
   io.pins.rgmii_tx_ctl := ethmac1g.io.rgmii_tx_ctl
 
 
-
   // Default response
   val respReg = RegInit(OcpResp.NULL)
   respReg := OcpResp.NULL

@@ -98,7 +98,6 @@ architecture rtl of patmos_top is
 
   constant clk1_mult   : natural := 5;
   constant clk1_div    : natural := 2;
-  constant clk1_phase : string := "2000";
 
   signal clk_int : std_logic;
   signal clk_125 : std_logic;
@@ -123,12 +122,24 @@ begin
       divide_by   => pll_div,
 
       clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div,
-      clk1_phase_shift => clk1_phase
+      clk1_divide_by => clk1_div
     )
     port map(
       inclk0 => clk,
-      c0     => clk_int,
+      c0     => clk_int
+    );
+	 
+	 
+	 pll_inst2 : entity work.pll generic map(
+      input_freq  => pll_infreq,
+      multiply_by => pll_mult,
+      divide_by   => pll_div,
+
+      clk1_multiply_by => clk1_mult,
+      clk1_divide_by => clk1_div
+    )
+    port map(
+	   inclk0 => clk,
       c1     => clk_125,
       c2     => clk_125_90
     );

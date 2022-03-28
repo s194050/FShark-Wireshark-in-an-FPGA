@@ -92,6 +92,10 @@ public:
     c->io_UartCmp_rx = 1; // keep UART tx high when idle
     outputTarget = &cout; // default uart print to terminal
 
+    //for RGMII
+    RGMII_on = false;
+    c->io_FPGAsharkMAC_rgmii_rxd = 1; // keep RGMII tx high when idle
+
     #ifdef EXTMEM_SSRAM32CTRL
     ram_buf = (uint32_t *)calloc(1 << EXTMEM_ADDR_BITS, sizeof(uint32_t));
     #endif /* EXTMEM_SSRAM32CTRL */
@@ -142,7 +146,7 @@ public:
     // Make sure any inheritance gets applied
     for (int i = 0; i < cycles; i++)
     {
-      this->tick(STDIN_FILENO, STDOUT_FILENO);
+      this->tick(STDIN_FILENO, STDOUT_FILENO, STDIN_FILENO, STDOUT_FILENO);
     }
     c->reset = 0;
   }
@@ -152,7 +156,7 @@ public:
     return std::min(std::min(c80,c125),c125_90);
   }
 
-  void tick(int uart_in,int uart_out)
+  void tick(int uart_in,int uart_out, int RGMII_in, int RGMII_out)
   {
     // Increment our own internal time reference
     m_tickcount++;
@@ -216,11 +220,16 @@ public:
       if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
         c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
+        if (RGMII_on)
+        {
+          emu_RGMII(RGMII_in, RGMII_out);
+        }
       }
       c->eval();
       if (trace && !c80_zeroed) {
         c_trace->dump((c80_period*2)*m_tickcount+time+2);
       }
+
     }
 
     //RGMII emulation
@@ -296,6 +305,46 @@ public:
             c->Patmos__DOT__UartCmp__DOT__uart__DOT__rx_baud_tick = 1;
             c->Patmos__DOT__UartCmp__DOT__uart__DOT__rxd_reg2 = 1;
             c->Patmos__DOT__UartCmp__DOT__uart__DOT__rx_buff = d;
+          }
+        }
+      }
+    }
+  }
+
+
+  void emu_RGMII(int RGMII_in,int RGMII_out) {
+    static unsigned baud_counter = 0;
+
+    // Seperate Chisel code neccessary?
+  /*if (c->Patmos__DOT__UartCmp__DOT__uart__DOT__uartOcpEmu_Cmd == 0x1
+        && (c->Patmos__DOT__UartCmp__DOT__uart__DOT__uartOcpEmu_Addr & 0xff) == 0x04) {
+      unsigned char d = c->Patmos__DOT__UartCmp__DOT__uart__DOT__uartOcpEmu_Data;
+      int w = write(RGMII_out, &d, 1);
+      if (w != 1) {
+        cerr << "patemu: error: Cannot write RGMII output" << endl;
+      }
+    }
+   */
+    // Pass on data to RGMII
+    bool baud_tick = c->io_FPGAsharkMAC_gtx_clk;
+    if (baud_tick) {
+      baud_counter = (baud_counter + 1) % 10;
+    }
+    c->io_FPGAsharkMAC_rgmii_rx_clk = 0;
+    if (baud_tick && baud_counter == 0) {
+      struct pollfd pfd;
+      pfd.fd = RGMII_in;
+      pfd.events = POLLIN;
+      if (poll(&pfd, 1, 0) > 0) {
+        unsigned char d;
+        int r = read(RGMII_in, &d, 1);
+        if (r != 0) {
+          if (r != 1) {
+            cerr << "patemu: error: Cannot read RGMII input" << endl;
+          } else {
+            c->io_FPGAsharkMAC_rgmii_rx_ctl = 0x3; // rx_stop_bit
+            c->io_FPGAsharkMAC_rgmii_rx_clk = 1;
+            c->io_FPGAsharkMAC_rgmii_rxd = d;
           }
         }
       }
@@ -571,7 +620,7 @@ void emu_extmem() {}
   void init_icache(val_t entry)
   {
 
-    tick(STDIN_FILENO, STDOUT_FILENO);
+    tick(STDIN_FILENO, STDOUT_FILENO,STDIN_FILENO, STDOUT_FILENO);
     if (entry != 0)
     {
       if (entry >= 0x20000)
@@ -1084,8 +1133,9 @@ int main(int argc, char **argv, char **env)
 
 
   emu->reset(1);
-  emu->tick(uart_in, uart_out);
+  emu->tick(uart_in, uart_out, RGMII_in, RGMII_out);
   emu->UART_init();
+  emu->RGMII_init();
 
   val_t entry = 0;
   if (optind < argc)
@@ -1100,7 +1150,7 @@ int main(int argc, char **argv, char **env)
   }
 
   emu->reset(5);
-  emu->tick(uart_in, uart_out);
+  emu->tick(uart_in, uart_out, RGMII_in, RGMII_out);
 
   emu->init_icache(entry);
 
@@ -1113,7 +1163,7 @@ int main(int argc, char **argv, char **env)
   while (limit < 0 || emu->get_tick_count() < limit)
   {
     cnt++;
-    emu->tick(uart_in, uart_out);
+    emu->tick(uart_in, uart_out, RGMII_in, RGMII_out);
     if(keys){
       emu->emu_keys();
     }
