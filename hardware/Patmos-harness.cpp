@@ -324,7 +324,6 @@ public:
     bool baud_tick = c->io_FPGAsharkMAC_gtx_clk90;
     if (baud_tick) {
       baud_counter = (baud_counter + 1) % 10;
-      c->io_FPGAsharkMAC_rgmii_rx_clk = 0;
     }
     if (baud_tick && baud_counter == 0) {
       struct pollfd pfd;
@@ -338,7 +337,6 @@ public:
             cerr << "patemu: error: Cannot read RGMII input" << endl;
           } else {
             c->io_FPGAsharkMAC_rgmii_tx_ctl = 0x3; // rx_stop_bit
-            c->io_FPGAsharkMAC_rgmii_tx_clk = 1;
             c->io_FPGAsharkMAC_rgmii_txd = d;
           }
         }
