@@ -21,11 +21,6 @@ entity patmos_top is
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
     iUartPins_rxd : in  std_logic;
-	  oUart2Pins_txd : out   std_logic;
-    iUart2Pins_rxd : in    std_logic;
-    oUart3Pins_txd : out   std_logic;
-    iUart3Pins_rxd : in    std_logic;
-	  oGpioPins_gpio_0 : inout std_logic_vector(7 downto 0);
     oSRAM_A : out std_logic_vector(19 downto 0);
     SRAM_DQ : inout std_logic_vector(15 downto 0);
     oSRAM_CE_N : out std_logic;
@@ -128,8 +123,8 @@ begin
       inclk0 => clk,
       c0     => clk_int
     );
-	 
-	 
+
+
 	 pll_inst2 : entity work.pll generic map(
       input_freq  => pll_infreq,
       multiply_by => pll_mult,
