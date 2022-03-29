@@ -34,6 +34,8 @@ object FPGAsharkMAC extends DeviceObject {
   }
 }
 
+
+
 class eth_mac_1gBB extends BlackBox {
   val io = IO(new Bundle(){
     // Clock and reset logic

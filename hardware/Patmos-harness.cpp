@@ -305,28 +305,55 @@ public:
 
 
   void emu_RGMII(int RGMII_in,int RGMII_out,int edge) {
-    static int counter = 0;
-    const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55, 0x5D};
-    unsigned char byteout = 0;
+    static int counter = -400;
+    static int dataCnt = 0;
+    const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55,0xD5};
+    const int checksum[4] = {0xEE,0x7F,0xEC,0xB0};
+    unsigned char byteout = 0xFF;
     int en = 0;
     //RGMII Source (RX)
-    if(counter <= 8){
+    if(counter < 0){ // Delay start of RGMII interface simulation
+      if(!edge){
+        counter++;
+      }
+    }else if(counter <= 7){
       en = 1; // set high for all of frame transmission
       byteout = preamble[counter];
-      if(edge){
-        counter += 1; // Increment counter
+      if(!edge){
+        counter++; // Increment counter
       }
-    }else{ // Counter > 8
+    }else if(counter == 8) {
+      en = 1;
+      byteout = dataCnt;
+
+
+      if((dataCnt-60) == 4){ // Count up when checksum is sent.
+        counter++;
+        dataCnt = 0;
+      }
+
+      if(dataCnt > 59){ // Checksum part of frame
+        byteout = checksum[dataCnt-60];
+      }
+
+      if(!edge){ // Increment data counter on falling edge
+      dataCnt++;
+      }
+    }else { // Counter > 8
       en = 0; // Enable is low for all of ifg transmission
       byteout = 0x00; // IFG zeroing
-      if(counter > (8+12)){
+      if(counter > (9+12)){
         counter = 0; // Reset counter frame is sent
       }else{
-        if(edge){
-          counter += 1; // Increment counter for IFG
+        if(!edge){
+          counter++; // Increment counter for IFG
         }
       }
     }
+    c -> io_FPGAsharkMAC_rgmii_rx_clk = !edge;
+    c -> io_FPGAsharkMAC_rgmii_rx_ctl = en;
+    c -> io_FPGAsharkMAC_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
+    /*
     int r = read(RGMII_in, &byteout, 1);
     if (r != 0) {
       if (r != 1) {
@@ -337,6 +364,7 @@ public:
           c -> io_FPGAsharkMAC_rgmii_rxd = edge ? byteout  >> 4 : byteout & 0x0F;
     }
   }
+  */
 }
 
   void emu_keys(void){

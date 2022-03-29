@@ -115,8 +115,8 @@ begin
       input_freq  => pll_infreq,
       multiply_by => pll_mult,
       divide_by   => pll_div,
-
-      clk1_multiply_by => clk1_mult,
+		
+		clk1_multiply_by => clk1_mult,
       clk1_divide_by => clk1_div
     )
     port map(
