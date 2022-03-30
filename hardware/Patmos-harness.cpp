@@ -184,12 +184,12 @@ public:
 
       if(c125 == 0){ // 125 MHz clock
         c125 = c125_period;
-        c->io_FPGAsharkMAC_gtx_clk = !c->io_FPGAsharkMAC_gtx_clk;
-        emu_RGMII(RGMII_in,RGMII_out,c->io_FPGAsharkMAC_gtx_clk);
+        c->io_FMAC_gtx_clk = !c->io_FMAC_gtx_clk;
+        emu_RGMII(RGMII_in,RGMII_out,c->io_FMAC_gtx_clk);
       }
       if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
-        c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
+        c->io_FMAC_gtx_clk90 = !c->io_FMAC_gtx_clk90;
       }
       c->eval();
       if (trace) {
@@ -215,17 +215,17 @@ public:
 
       if(c125 == 0){ // 125 MHz clock
         c125 = c125_period;
-        c->io_FPGAsharkMAC_gtx_clk = !c->io_FPGAsharkMAC_gtx_clk;
-        emu_RGMII(RGMII_in,RGMII_out,c->io_FPGAsharkMAC_gtx_clk);
+        c->io_FMAC_gtx_clk = !c->io_FMAC_gtx_clk;
+        emu_RGMII(RGMII_in,RGMII_out,c->io_FMAC_gtx_clk);
       }
       if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
-        c->io_FPGAsharkMAC_gtx_clk90 = !c->io_FPGAsharkMAC_gtx_clk90;
+        c->io_FMAC_gtx_clk90 = !c->io_FMAC_gtx_clk90;
       }
       c->eval();
 
 
-      if (trace && !c80_zeroed) {
+      if (trace) {
         c_trace->dump((c80_period*2)*m_tickcount+time+2);
       }
 
@@ -351,18 +351,18 @@ public:
         }
       }
     }
-    c -> io_FPGAsharkMAC_rgmii_rx_clk = !edge;
-    c -> io_FPGAsharkMAC_rgmii_rx_ctl = en;
-    c -> io_FPGAsharkMAC_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
+    c -> io_FMAC_rgmii_rx_clk = !edge;
+    c -> io_FMAC_rgmii_rx_ctl = en;
+    c -> io_FMAC_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
     /*
     int r = read(RGMII_in, &byteout, 1);
     if (r != 0) {
       if (r != 1) {
         cerr << "patemu: error: Cannot read RGMII input" << endl;
       } else {
-          c -> io_FPGAsharkMAC_rgmii_rx_clk = !edge;
-          c -> io_FPGAsharkMAC_rgmii_rx_ctl = en;
-          c -> io_FPGAsharkMAC_rgmii_rxd = edge ? byteout  >> 4 : byteout & 0x0F;
+          c -> io_FMAC_rgmii_rx_clk = !edge;
+          c -> io_FMAC_rgmii_rx_ctl = en;
+          c -> io_FMAC_rgmii_rxd = edge ? byteout  >> 4 : byteout & 0x0F;
     }
   }
   */

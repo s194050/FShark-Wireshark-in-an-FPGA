@@ -62,16 +62,16 @@ architecture rtl of patmos_top is
 		  io_UartCmp_rx                    : in  std_logic;
 
 	   --Clock and logic
-      io_FPGAsharkMAC_gtx_clk : in std_logic;
-      io_FPGAsharkMAC_gtx_clk90 : in std_logic;
-      io_FPGAsharkMAC_gtx_rst : in std_logic;
+      io_FMAC_gtx_clk : in std_logic;
+      io_FMAC_gtx_clk90 : in std_logic;
+      io_FMAC_gtx_rst : in std_logic;
       -- RGMII interface
-      io_FPGAsharkMAC_rgmii_rx_clk : in std_logic;
-      io_FPGAsharkMAC_rgmii_rxd : in std_logic_vector(3 downto 0);
-      io_FPGAsharkMAC_rgmii_rx_ctl : in std_logic;
-      io_FPGAsharkMAC_rgmii_tx_clk : out std_logic;
-      io_FPGAsharkMAC_rgmii_txd : out std_logic_vector(3 downto 0);
-      io_FPGAsharkMAC_rgmii_tx_ctl : out std_logic;
+      io_FMAC_rgmii_rx_clk : in std_logic;
+      io_FMAC_rgmii_rxd : in std_logic_vector(3 downto 0);
+      io_FMAC_rgmii_rx_ctl : in std_logic;
+      io_FMAC_rgmii_tx_clk : out std_logic;
+      io_FMAC_rgmii_txd : out std_logic_vector(3 downto 0);
+      io_FMAC_rgmii_tx_ctl : out std_logic;
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -115,7 +115,7 @@ begin
       input_freq  => pll_infreq,
       multiply_by => pll_mult,
       divide_by   => pll_div,
-		
+
 		clk1_multiply_by => clk1_mult,
       clk1_divide_by => clk1_div
     )
@@ -172,21 +172,21 @@ begin
     patmos_inst : Patmos port map(
     clock => clk_int,
     reset => int_res,
-    io_FPGAsharkMAC_gtx_clk => clk_125,
-    io_FPGAsharkMAC_gtx_clk90 => clk_125_90,
-    io_FPGAsharkMAC_gtx_rst =>  int_res,
+    io_FMAC_gtx_clk => clk_125,
+    io_FMAC_gtx_clk90 => clk_125_90,
+    io_FMAC_gtx_rst =>  int_res,
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
     io_UartCmp_tx => oUartPins_txd,
     io_UartCmp_rx => iUartPins_rxd,
 
-    io_FPGAsharkMAC_rgmii_rx_clk => ENET0_RX_CLK,
-    io_FPGAsharkMAC_rgmii_rxd => ENET0_RX_DATA,
-    io_FPGAsharkMAC_rgmii_rx_ctl =>  ENET0_RX_DV,
-    io_FPGAsharkMAC_rgmii_tx_clk => ENET0_GTX_CLK,
-    io_FPGAsharkMAC_rgmii_txd => ENET0_TX_DATA,
-    io_FPGAsharkMAC_rgmii_tx_ctl => ENET0_TX_EN,
+    io_FMAC_rgmii_rx_clk => ENET0_RX_CLK,
+    io_FMAC_rgmii_rxd => ENET0_RX_DATA,
+    io_FMAC_rgmii_rx_ctl =>  ENET0_RX_DV,
+    io_FMAC_rgmii_tx_clk => ENET0_GTX_CLK,
+    io_FMAC_rgmii_txd => ENET0_TX_DATA,
+    io_FMAC_rgmii_tx_ctl => ENET0_TX_EN,
 
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,

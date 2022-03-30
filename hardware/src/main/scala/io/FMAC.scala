@@ -36,7 +36,7 @@ object FMAC extends DeviceObject {
 
 
 
-class eth_mac_1gBB extends BlackBox {
+class eth_mac_1gBB(target: String) extends BlackBox(Map("TARGET" -> target)) {
   val io = IO(new Bundle(){
     // Clock and reset logic
     //----------------------
@@ -91,7 +91,7 @@ class eth_mac_1gBB extends BlackBox {
 
 class FMAC extends CoreDevice() {
   override val io = IO(new CoreDeviceIO() with FMAC.Pins {})
-  val ethmac1g = Module(new eth_mac_1gBB())
+  val ethmac1g = Module(new eth_mac_1gBB("SIM"))
   // Connect the pins straight through
   // Clock and logic
   ethmac1g.io.gtx_clk := io.pins.gtx_clk
@@ -116,7 +116,6 @@ class FMAC extends CoreDevice() {
 
 
   ethmac1g.io.rx_axis_tready := true.B
-  ethmac1g.io.tx_axis_tvalid := true.B
   //Initiate states:
   //----------------
   //Reciever
@@ -137,11 +136,14 @@ class FMAC extends CoreDevice() {
   ethmac1g.io.tx_axis_tlast := dataWriter(30)
   ethmac1g.io.tx_axis_tdata := dataWriter(7,0)
   */
+  /*
   when(io.ocp.M.Cmd === OcpCmd.RD){
     //rx_axis_tready_Reg := true.B
     respReg := OcpResp.DVA
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
+  */
+   
   /*
 
   val macIdle :: macWait :: macRead :: Nil = Enum(3)
