@@ -305,11 +305,11 @@ public:
 
 
   void emu_RGMII(int RGMII_in,int RGMII_out,int edge) {
-    static int counter = -400;
+    static int counter = -200;
     static int dataCnt = 0;
     const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55,0xD5};
     const int checksum[4] = {0xEE,0x7F,0xEC,0xB0};
-    unsigned char byteout = 0xFF;
+    unsigned char byteout = 0;
     int en = 0;
     //RGMII Source (RX)
     if(counter < 0){ // Delay start of RGMII interface simulation
@@ -327,17 +327,18 @@ public:
       byteout = dataCnt;
 
 
-      if((dataCnt-60) == 4){ // Count up when checksum is sent.
-        counter++;
-        dataCnt = 0;
-      }
 
       if(dataCnt > 59){ // Checksum part of frame
         byteout = checksum[dataCnt-60];
       }
 
       if(!edge){ // Increment data counter on falling edge
-      dataCnt++;
+        dataCnt++;
+        if((dataCnt-60) == 4){ // Count up when checksum is sent.
+          counter++;
+          dataCnt = 0;
+        }
+
       }
     }else { // Counter > 8
       en = 0; // Enable is low for all of ifg transmission

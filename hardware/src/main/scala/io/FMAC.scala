@@ -9,11 +9,11 @@ import chisel3.internal.HasId
 import patmos.Constants.CLOCK_FREQ
 import ocp._
 
-object FPGAsharkMAC extends DeviceObject {
+object FMAC extends DeviceObject {
 
   def init(params: Map[String, String]) = {}
 
-  def create(params: Map[String, String]): FPGAsharkMAC= Module(new FPGAsharkMAC())
+  def create(params: Map[String, String]): FMAC = Module(new FMAC())
 
   trait Pins extends patmos.HasPins {
     override val pins = new Bundle() {
@@ -48,7 +48,7 @@ class eth_mac_1gBB extends BlackBox {
     // AXI Input
     //----------
     val tx_axis_tdata = Input(UInt(8.W))
-    val tx_axis_tkeep = Input(UInt(8.W))
+    val tx_axis_tkeep = Input(Bool())
     val tx_axis_tvalid = Input(Bool())
     val tx_axis_tready = Output(Bool())
     val tx_axis_tlast = Input(Bool())
@@ -56,7 +56,7 @@ class eth_mac_1gBB extends BlackBox {
     //AXI Output
     //----------
     val rx_axis_tdata = Output(UInt(8.W))
-    val rx_axis_tkeep = Output(UInt(8.W))
+    val rx_axis_tkeep = Output(Bool())
     val rx_axis_tvalid = Output(Bool())
     val rx_axis_tready = Input(Bool())
     val rx_axis_tlast = Output(Bool())
@@ -89,8 +89,8 @@ class eth_mac_1gBB extends BlackBox {
 }
 
 
-class FPGAsharkMAC extends CoreDevice() {
-  override val io = IO(new CoreDeviceIO() with FPGAsharkMAC.Pins {})
+class FMAC extends CoreDevice() {
+  override val io = IO(new CoreDeviceIO() with FMAC.Pins {})
   val ethmac1g = Module(new eth_mac_1gBB())
   // Connect the pins straight through
   // Clock and logic
@@ -114,31 +114,35 @@ class FPGAsharkMAC extends CoreDevice() {
   val respReg = RegInit(OcpResp.NULL)
   respReg := OcpResp.NULL
 
+
+  ethmac1g.io.rx_axis_tready := true.B
+  ethmac1g.io.tx_axis_tvalid := true.B
   //Initiate states:
   //----------------
   //Reciever
-  val rx_axis_tready_Reg = RegInit(false.B)
-  rx_axis_tready_Reg := false.B
+  /*
+  val rx_axis_tready_Reg = RegInit(true.B)
+  rx_axis_tready_Reg := true.B
   ethmac1g.io.rx_axis_tready := rx_axis_tready_Reg
   //Transmitter
   val tx_axis_tvalid_Reg = RegInit(false.B)
   tx_axis_tvalid_Reg := false.B
   ethmac1g.io.tx_axis_tvalid := tx_axis_tvalid_Reg
-
+*/
   // Data recieved from Verilog Ethernet MAC
   val dataReader = RegInit(0.U(32.W))
-
+/*
   // Data to Verilog Ethernet MAC
   val dataWriter= RegInit(0.U(32.W))
   ethmac1g.io.tx_axis_tlast := dataWriter(30)
   ethmac1g.io.tx_axis_tdata := dataWriter(7,0)
-  /*
+  */
   when(io.ocp.M.Cmd === OcpCmd.RD){
-    rx_axis_tready_Reg := true.B
+    //rx_axis_tready_Reg := true.B
     respReg := OcpResp.DVA
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
-  */
+  /*
 
   val macIdle :: macWait :: macRead :: Nil = Enum(3)
   val stateMAC = RegInit(macIdle)
@@ -169,8 +173,9 @@ class FPGAsharkMAC extends CoreDevice() {
     respReg := OcpResp.DVA
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
-
+*/
   // Connections to master
   io.ocp.S.Resp := respReg
   io.ocp.S.Data := dataReader
+
 }
