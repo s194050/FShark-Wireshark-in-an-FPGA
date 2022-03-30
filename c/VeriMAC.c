@@ -5,11 +5,12 @@
 int main(){
 	volatile _SPM int *uart_status = (volatile _SPM int *) 0xF0080000;
 	volatile _SPM int *uart_data = (volatile _SPM int *) 0xF0080004;
-	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00d0000;
+	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00b0000;
+	unsigned char packet = 0x00;
 
- // HEJ
 	for (;;) {
-		*uart_data = *io_ptr;
+		packet = *io_ptr;
+		*uart_data = packet;
 
   		while ((*uart_status & 0x01) == 0) {
   		;

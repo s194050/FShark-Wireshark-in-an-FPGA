@@ -114,28 +114,24 @@ class FMAC extends CoreDevice() {
   val respReg = RegInit(OcpResp.NULL)
   respReg := OcpResp.NULL
 
-
-  ethmac1g.io.rx_axis_tready := true.B
   //Initiate states:
   //----------------
   //Reciever
-  /*
-  val rx_axis_tready_Reg = RegInit(true.B)
-  rx_axis_tready_Reg := true.B
+
+  val rx_axis_tready_Reg = RegInit(false.B)
+  rx_axis_tready_Reg := false.B
   ethmac1g.io.rx_axis_tready := rx_axis_tready_Reg
   //Transmitter
   val tx_axis_tvalid_Reg = RegInit(false.B)
   tx_axis_tvalid_Reg := false.B
   ethmac1g.io.tx_axis_tvalid := tx_axis_tvalid_Reg
-*/
   // Data recieved from Verilog Ethernet MAC
   val dataReader = RegInit(0.U(32.W))
-/*
+
   // Data to Verilog Ethernet MAC
   val dataWriter= RegInit(0.U(32.W))
   ethmac1g.io.tx_axis_tlast := dataWriter(30)
   ethmac1g.io.tx_axis_tdata := dataWriter(7,0)
-  */
   /*
   when(io.ocp.M.Cmd === OcpCmd.RD){
     //rx_axis_tready_Reg := true.B
@@ -143,10 +139,7 @@ class FMAC extends CoreDevice() {
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
   */
-
-  /*
-
-  val macIdle :: macWait :: macRead :: Nil = Enum(3)
+    val macIdle :: macWait :: macRead :: Nil = Enum(3)
   val stateMAC = RegInit(macIdle)
 
   when(io.ocp.M.Cmd === OcpCmd.WR) {
@@ -175,7 +168,6 @@ class FMAC extends CoreDevice() {
     respReg := OcpResp.DVA
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
-*/
   // Connections to master
   io.ocp.S.Resp := respReg
   io.ocp.S.Data := dataReader
