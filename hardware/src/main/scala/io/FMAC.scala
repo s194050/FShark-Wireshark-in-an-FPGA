@@ -10,10 +10,13 @@ import patmos.Constants.CLOCK_FREQ
 import ocp._
 
 object FMAC extends DeviceObject {
+  var target = "SIM"
 
-  def init(params: Map[String, String]) = {}
+  def init(params: Map[String, String]) = {
+      target = getParam(params,"target")
+  }
 
-  def create(params: Map[String, String]): FMAC = Module(new FMAC())
+  def create(params: Map[String, String]): FMAC = Module(new FMAC(target))
 
   trait Pins extends patmos.HasPins {
     override val pins = new Bundle() {
@@ -89,7 +92,7 @@ class eth_mac_1gBB(target: String) extends BlackBox(Map("TARGET" -> target)) {
 }
 
 
-class FMAC extends CoreDevice() {
+class FMAC(target: String = "SIM") extends CoreDevice() {
   override val io = IO(new CoreDeviceIO() with FMAC.Pins {})
   val ethmac1g = Module(new eth_mac_1gBB("SIM"))
   // Connect the pins straight through
