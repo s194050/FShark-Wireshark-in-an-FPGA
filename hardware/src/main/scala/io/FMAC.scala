@@ -40,6 +40,7 @@ object FMAC extends DeviceObject {
 
 
 class eth_mac_1gBB(target: String) extends BlackBox(Map("TARGET" -> target)) {
+  // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
   val io = IO(new Bundle(){
     // Clock and reset logic
     //----------------------
