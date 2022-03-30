@@ -143,7 +143,7 @@ class FMAC extends CoreDevice() {
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
   */
-   
+
   /*
 
   val macIdle :: macWait :: macRead :: Nil = Enum(3)
