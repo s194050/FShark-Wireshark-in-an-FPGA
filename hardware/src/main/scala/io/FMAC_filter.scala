@@ -43,6 +43,7 @@ class FMAC_filter extends  Module{
   }
   when(stateBuffer === bufferFlush){
     // Flush the buffer
+    filteredFrame := true.B
   }
   when(stateBuffer === bufferOkay){
     // Keep writing to buffer
