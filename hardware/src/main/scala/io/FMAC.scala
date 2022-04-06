@@ -11,9 +11,11 @@ import ocp._
 
 object FMAC extends DeviceObject {
   var target = "SIM"
+  var datawidth = 16
 
   def init(params: Map[String, String]) = {
       target = getParam(params,"target")
+      datawidth = getIntParam(params, "datawidth")
   }
 
   def create(params: Map[String, String]): FMAC = Module(new FMAC(target))
@@ -39,7 +41,7 @@ object FMAC extends DeviceObject {
 
 
 
-class eth_mac_1gBB(target: String) extends BlackBox(Map("TARGET" -> target)) {
+class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET" -> target,"AXIS_DATA_WIDTH" -> datawidth)) {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
   val io = IO(new Bundle(){
     // Clock and reset logic
@@ -93,9 +95,9 @@ class eth_mac_1gBB(target: String) extends BlackBox(Map("TARGET" -> target)) {
 }
 
 
-class FMAC(target: String = "SIM") extends CoreDevice() {
+class FMAC(target: String = "SIM", datawidth: Int = 16) extends CoreDevice() {
   override val io = IO(new CoreDeviceIO() with FMAC.Pins {})
-  val ethmac1g = Module(new eth_mac_1gBB("SIM"))
+  val ethmac1g = Module(new eth_mac_1gBB("SIM",16))
   // Connect the pins straight through
   // Clock and logic
   ethmac1g.io.gtx_clk := io.pins.gtx_clk

@@ -4,10 +4,11 @@ import chisel3.util._
 
 
 
-
+// Needs fixin
 class FMAC_filter extends  Module{
       val io = IO(new Bundle{
         val in = Module(new FMAC)
+        val flushBuffer = Output(Bool())
       })
   // Counter to count the amount of bytes in each frame recieved
   val cntFrame = RegInit(0.U(32.W))
@@ -15,8 +16,8 @@ class FMAC_filter extends  Module{
 
  // If ctl is high, frame is recieved, increase counter at each
   // rising edge, as a byte is transmitted each rising edge
-  when(io.in.io.pins.rgmii_rx_ctl){
-    cntFrame := cntFrame + io.in.io.pins.rgmii_rx_clk
+  when(io.in.ethmac1g.io.rx_axis_tvalid){
+    cntFrame := cntFrame
   }
 
   // When t_last is high the frame has reached the end. reset counter
@@ -43,10 +44,20 @@ class FMAC_filter extends  Module{
   }
   when(stateBuffer === bufferFlush){
     // Flush the buffer
-    filteredFrame := true.B
+    io.flushBuffer := true.B
+    stateBuffer := bufferFlush
+    when(io.flushBuffer === false.B){
+      filteredFrame := true.B
+      stateBuffer := bufferOkay
+    }
   }
   when(stateBuffer === bufferOkay){
     // Keep writing to buffer
+    when(!filteredFrame) {
+      stateBuffer := bufferFlush
+    }.otherwise{
+      stateBuffer := bufferOkay
+    }
   }
 
 }
