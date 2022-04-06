@@ -354,18 +354,7 @@ public:
     c -> io_FMAC_rgmii_rx_clk = !edge;
     c -> io_FMAC_rgmii_rx_ctl = en;
     c -> io_FMAC_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
-    /*
-    int r = read(RGMII_in, &byteout, 1);
-    if (r != 0) {
-      if (r != 1) {
-        cerr << "patemu: error: Cannot read RGMII input" << endl;
-      } else {
-          c -> io_FMAC_rgmii_rx_clk = !edge;
-          c -> io_FMAC_rgmii_rx_ctl = en;
-          c -> io_FMAC_rgmii_rxd = edge ? byteout  >> 4 : byteout & 0x0F;
-    }
-  }
-  */
+
 }
 
   void emu_keys(void){

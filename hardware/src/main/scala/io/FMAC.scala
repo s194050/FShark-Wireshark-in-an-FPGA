@@ -53,7 +53,7 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
     val logic_rst = Input(Bool())
     // AXI Input
     //----------
-    val tx_axis_tdata = Input(UInt(8.W))
+    val tx_axis_tdata = Input(UInt(datawidth.W))
     val tx_axis_tkeep = Input(Bool())
     val tx_axis_tvalid = Input(Bool())
     val tx_axis_tready = Output(Bool())
@@ -61,7 +61,7 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
     val tx_axis_tuser = Input(Bool())
     //AXI Output
     //----------
-    val rx_axis_tdata = Output(UInt(8.W))
+    val rx_axis_tdata = Output(UInt(datawidth.W))
     val rx_axis_tkeep = Output(Bool())
     val rx_axis_tvalid = Output(Bool())
     val rx_axis_tready = Input(Bool())

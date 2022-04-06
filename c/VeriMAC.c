@@ -2,16 +2,37 @@
 #include <machine/spm.h>
 //#include "include/bootable.h"
 
+void tohex(int in, char * out)
+{
+    int pin = in;
+    const char * hex = "0123456789ABCDEF";
+    char * byte = out;
+	byte[0] = hex[(pin>>12) & 0xF];
+	byte[1] = hex[(pin>>8) & 0xF];
+	byte[2] = hex[(pin>>4) & 0xF];
+	byte[3] = hex[ pin     & 0xF];
+	byte[4] = 32;
+}
+
+
 int main(){
 	volatile _SPM int *uart_status = (volatile _SPM int *) 0xF0080000;
 	volatile _SPM int *uart_data = (volatile _SPM int *) 0xF0080004;
 	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00b0000;
-	unsigned char packet = 0x00;
+	int packet;
+	char str[5];
 
 	for (;;) {
 		packet = *io_ptr;
-		*uart_data = packet;
 
+        tohex(packet,str);
+
+		*uart_data = str[2];
+		*uart_data = str[3];
+		*uart_data = str[4];
+		*uart_data = str[0];
+		*uart_data = str[1];
+		*uart_data = str[4];
   		while ((*uart_status & 0x01) == 0) {
   		;
   		}
