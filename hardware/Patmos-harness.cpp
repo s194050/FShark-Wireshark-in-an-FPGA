@@ -303,7 +303,7 @@ public:
     }
   }
 
-
+  // Add read file functionallity of frames, and include CRC calculations aswell.
   void emu_RGMII(int RGMII_in,int RGMII_out,int edge) {
     static int counter = -200;
     static int dataCnt = 0;

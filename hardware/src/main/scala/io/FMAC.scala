@@ -54,7 +54,7 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
     // AXI Input
     //----------
     val tx_axis_tdata = Input(UInt(datawidth.W))
-    val tx_axis_tkeep = Input(Bool())
+    val tx_axis_tkeep = Input(UInt((datawidth/8).W))
     val tx_axis_tvalid = Input(Bool())
     val tx_axis_tready = Output(Bool())
     val tx_axis_tlast = Input(Bool())
@@ -62,7 +62,7 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
     //AXI Output
     //----------
     val rx_axis_tdata = Output(UInt(datawidth.W))
-    val rx_axis_tkeep = Output(Bool())
+    val rx_axis_tkeep = Output(UInt((datawidth/8).W))
     val rx_axis_tvalid = Output(Bool())
     val rx_axis_tready = Input(Bool())
     val rx_axis_tlast = Output(Bool())
@@ -145,7 +145,7 @@ class FMAC(target: String = "SIM", datawidth: Int = 16) extends CoreDevice() {
     dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
   }
   */
-    val macIdle :: macWait :: macRead :: Nil = Enum(3)
+  val macIdle :: macWait :: macRead :: Nil = Enum(3)
   val stateMAC = RegInit(macIdle)
 
   when(io.ocp.M.Cmd === OcpCmd.WR) {

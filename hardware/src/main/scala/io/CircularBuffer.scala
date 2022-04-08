@@ -16,8 +16,8 @@ class IObuffer(depth: Int, width: Int) extends Module {
 
 
 object CircularBuffer extends DeviceObject {
-  var depth = 1536
-  var width = 4
+  var depth = 1536+2 // +2 For header bytes signaling frame length
+  var width = 12
 
   def init(params: Map[String, String]) = {
     depth = getIntParam(params,"depth")
@@ -29,7 +29,7 @@ object CircularBuffer extends DeviceObject {
 
 
 class CircularBuffer(depth: Int, width: Int) extends CoreDevice() {
-  val out = new IObuffer(depth,width)
+  val out = new IObuffer(depth,width) // I/O to avoid overriding OCP interface
   val in = Module(new FMAC_filter)
   /*
   IO's  to push and pop and get status
@@ -38,20 +38,40 @@ class CircularBuffer(depth: Int, width: Int) extends CoreDevice() {
   val start = RegInit(0.U(width.W))
   val end = RegInit(0.U(width.W))
   val bufferValue = RegInit(0.U(width.W))
+
   //Status booleans
   out.io.bufferFull := false.B
   out.io.bufferEmpty := !out.io.bufferFull && (start === end)
+
   // Default response
   val respReg = RegInit(OcpResp.NULL)
   respReg := OcpResp.NULL
+
+
   // Flush the buffer as frame is unwanted
-  when(in.io.flushBuffer === true.B){
-    start := 0.U
-    end := 0.U
+  when(in.io.flushBuffer){
+    when(start - in.io.frameSize < 0.U){
+      start := 0.U
+    }.otherwise{
+      start := start - in.io.frameSize
+    }
+   /* when(end - in.io.frameSize < 0.U){
+      end := 0.U
+    }.otherwise{
+      end := end - - in.io.frameSize
+    }
+
+    */
     in.io.flushBuffer := false.B
   }
+
+  // When new frame is loaded make room for length bytes.
+  when(in.io.incrPntr){
+    start := start + 2.U
+    in.io.incrPntr := false.B
+  }
   // Need some code here to push and pop elements
-  when(io.ocp.M.Cmd === OcpCmd.RD && !out.io.bufferEmpty) {
+  when(io.ocp.M.Cmd === OcpCmd.RD && !out.io.bufferEmpty) { // Read from buffer (Pop)
     respReg := OcpResp.DVA
     when(end + 1.U === depth.U){
       end := 0.U
@@ -60,6 +80,11 @@ class CircularBuffer(depth: Int, width: Int) extends CoreDevice() {
       end := end + 1.U
       bufferValue := out.io.bufferData(end)
     }
+  }
+
+  // Write to the buffer (Push)
+  when(!in.io.flushBuffer){
+
   }
 
   // Mapping the indices between current head and tail
