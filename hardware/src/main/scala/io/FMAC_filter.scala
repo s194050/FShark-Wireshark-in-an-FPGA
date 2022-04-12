@@ -1,8 +1,10 @@
 package io
 import chisel3._
 import chisel3.util._
-
-
+/*
+  Hardware filter for use on the DE2-115 board, for filtering frames at 1G speeds, this is done due to the proce-
+  ssor used, is clocked slower than the utilised MAC.
+ */
 
 class FMAC_filter(datawidth: Int = 16) extends  Module{
       val io = IO(new Bundle{
@@ -22,10 +24,10 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
         })
       })
   // Counter to count the amount of bytes in each frame recieved
-  val cntFrame = RegInit(0.U(12.W))
+  val cntFrame = RegInit(0.U(datawidth.W))
   val GoodFrame = WireInit(false.B)
   val BadFrame = WireInit(false.B)
-  val frameSize = RegInit(0.U(12.W))
+  val frameSize = RegInit(0.U(datawidth.W))
 
 
   // Initialize signals
@@ -50,14 +52,14 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
   val bufferIdle :: bufferEvaluate:: bufferBadFrame :: bufferGoodFrame :: bufferFlushFrame :: bufferAddHeader :: Nil = Enum(6)
   val stateBuffer = RegInit(bufferIdle)
 
-when(io.filter_bus.ready) {
   when(stateBuffer === bufferIdle) {
     io.filter_bus.bits.flushFrame := false.B
     io.filter_bus.bits.addHeader := false.B
+    io.filter_bus.bits.goodFrame := false.B
     BadFrame := false.B
     GoodFrame := false.B
 
-    when(io.axis_tvalid) {
+    when(io.axis_tvalid && io.filter_bus.ready) {
       io.axis_tready := true.B
       stateBuffer := bufferEvaluate
     }.otherwise {
@@ -66,13 +68,15 @@ when(io.filter_bus.ready) {
   }
   when(stateBuffer === bufferEvaluate) {
     io.filter_bus.valid := true.B
+    io.axis_tready := true.B
     // Check if frame[18] is the correct value otherwise filter it out
     when(cntFrame === 18.U) {
-      when(io.axis_tdata === 0x18.U) {
+      when(io.axis_tdata === 0x1312.U) {
         GoodFrame := true.B
         BadFrame := false.B
       }.otherwise {
         BadFrame := true.B
+        GoodFrame := false.B
       }
     }
     // Further filter logic for increasing complexity
@@ -87,15 +91,20 @@ when(io.filter_bus.ready) {
   }
 
   when(stateBuffer === bufferGoodFrame) {
+    io.filter_bus.valid := true.B
+    io.axis_tready := true.B
+    io.filter_bus.bits.goodFrame := true.B
     //State for when the frame supports the filter requirements
     when(io.axis_tlast) {
-      frameSize := cntFrame
+      io.axis_tready := false.B
+      frameSize := cntFrame + 1.U // Possibly wrong
       stateBuffer := bufferAddHeader
     }
   }
 
   when(stateBuffer === bufferAddHeader) {
     // Add length of the frame to the header
+    io.filter_bus.valid := true.B
     io.axis_tready := false.B
     io.filter_bus.bits.addHeader := true.B
     io.filter_bus.bits.tdata := frameSize
@@ -107,13 +116,15 @@ when(io.filter_bus.ready) {
 
   when(stateBuffer === bufferBadFrame) {
     // Interrupt filling of the circular buffer
+    io.axis_tready := true.B
     io.filter_bus.valid := false.B
     when(io.axis_tlast) {
-      frameSize := cntFrame
+      frameSize := cntFrame + 1.U // Possibly wrong
       stateBuffer := bufferFlushFrame
     }
   }
   when(stateBuffer === bufferFlushFrame) {
+    io.axis_tready := false.B
     // Flush the unwanted frame from the buffer
     io.filter_bus.bits.tdata := frameSize
     io.filter_bus.bits.flushFrame := true.B
@@ -121,5 +132,5 @@ when(io.filter_bus.ready) {
     cntFrame := 0.U
     stateBuffer := bufferIdle
   }
-}
+
 }

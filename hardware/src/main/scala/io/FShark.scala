@@ -111,6 +111,8 @@ class FShark(target: String = "SIM",datawidth: Int = 16) extends CoreDevice {
   CircBuffer.io.filter_bus.bits.tdata := FMAC_filter.io.filter_bus.bits.tdata
   CircBuffer.io.filter_bus.valid := FMAC_filter.io.filter_bus.valid
   FMAC_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
+  CircBuffer.io.ocp.M := io.ocp.M
+  io.ocp.S := CircBuffer.io.ocp.S
   //----------------------------------
   // Connect the pins straight through
   // Clock and logic
@@ -151,5 +153,4 @@ class FShark(target: String = "SIM",datawidth: Int = 16) extends CoreDevice {
     dataWriter := io.ocp.M.Data
   }
 
-  io.ocp.S.Resp := respReg
 }
