@@ -16,7 +16,7 @@
   <IOs>
   <IO DevTypeRef="Leds" offset="9"/>
   <IO DevTypeRef="Keys" offset="10" intrs="2,3,4,5"/>
-  <IO DevTypeRef="FMAC" offset="11" intrs="2"/>
+  <IO DevTypeRef="FShark" offset="11" intrs="2"/>
   </IOs>
 
   <Devs>
@@ -42,11 +42,11 @@
        <param name="sramAddrWidth" value="16" />
     </params>
   </Dev>
-  <Dev DevType="FMAC" entity="FMAC" iface="OcpCore">
+  <Dev DevType="FShark" entity="FShark" iface="OcpCore">
     <params>
   	<param name="target" value="SIM" />
     <param name="datawidth" value="16" />
     </params>
-  </Dev>
+  </Dev> 
   </Devs>
 </patmos>

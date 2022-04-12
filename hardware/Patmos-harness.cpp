@@ -184,12 +184,12 @@ public:
 
       if(c125 == 0){ // 125 MHz clock
         c125 = c125_period;
-        c->io_FMAC_gtx_clk = !c->io_FMAC_gtx_clk;
-        emu_RGMII(RGMII_in,RGMII_out,c->io_FMAC_gtx_clk);
+        c->io_FShark_gtx_clk = !c->io_FShark_gtx_clk;
+        emu_RGMII(RGMII_in,RGMII_out,c->io_FShark_gtx_clk);
       }
       if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
-        c->io_FMAC_gtx_clk90 = !c->io_FMAC_gtx_clk90;
+        c->io_FShark_gtx_clk90 = !c->io_FShark_gtx_clk90;
       }
       c->eval();
       if (trace) {
@@ -215,12 +215,12 @@ public:
 
       if(c125 == 0){ // 125 MHz clock
         c125 = c125_period;
-        c->io_FMAC_gtx_clk = !c->io_FMAC_gtx_clk;
-        emu_RGMII(RGMII_in,RGMII_out,c->io_FMAC_gtx_clk);
+        c->io_FShark_gtx_clk = !c->io_FShark_gtx_clk;
+        emu_RGMII(RGMII_in,RGMII_out,c->io_FShark_gtx_clk);
       }
       if(c125_90 == 0){ // 125 MHz phase shifted 90 deg clock
         c125_90 = c125_90_period;
-        c->io_FMAC_gtx_clk90 = !c->io_FMAC_gtx_clk90;
+        c->io_FShark_gtx_clk90 = !c->io_FShark_gtx_clk90;
       }
       c->eval();
 
@@ -351,9 +351,9 @@ public:
         }
       }
     }
-    c -> io_FMAC_rgmii_rx_clk = !edge;
-    c -> io_FMAC_rgmii_rx_ctl = en;
-    c -> io_FMAC_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
+    c -> io_FShark_rgmii_rx_clk = !edge;
+    c -> io_FShark_rgmii_rx_ctl = en;
+    c -> io_FShark_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
 
 }
 

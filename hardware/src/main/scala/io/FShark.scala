@@ -1,24 +1,18 @@
-/*
-OCP interface for Verilog Ethernet MAC 1g w/ FIFO - RGMII
- */
-
 package io
 import chisel3._
 import chisel3.util._
-import chisel3.internal.HasId
-import patmos.Constants.CLOCK_FREQ
 import ocp._
 
-object FMAC extends DeviceObject {
+object FShark extends DeviceObject {
   var target = "SIM"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
-      target = getParam(params,"target")
-      datawidth = getIntParam(params, "datawidth")
+    target = getParam(params,"target")
+    datawidth = getIntParam(params, "datawidth")
   }
 
-  def create(params: Map[String, String]): FMAC = Module(new FMAC(target))
+  def create(params: Map[String, String]): FShark = Module(new FShark(target,datawidth))
 
   trait Pins extends patmos.HasPins {
     override val pins = new Bundle() {
@@ -38,8 +32,6 @@ object FMAC extends DeviceObject {
     }
   }
 }
-
-
 
 class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET" -> target,"AXIS_DATA_WIDTH" -> datawidth)) {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
@@ -95,9 +87,31 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
 }
 
 
-class FMAC(target: String = "SIM", datawidth: Int = 16) extends CoreDevice() {
-  override val io = IO(new CoreDeviceIO() with FMAC.Pins {})
+// Top file for MAC, filter and circular buffer
+class FShark(target: String = "SIM",datawidth: Int = 16) extends CoreDevice {
+  override val io = IO(new CoreDeviceIO() with FShark.Pins {})
+  // Verilog Ethernet MAC blackbox
   val ethmac1g = Module(new eth_mac_1gBB("SIM",16))
+  //Filter for FMAC, input to the Circular buffer
+  val FMAC_filter = Module(new FMAC_filter(datawidth))
+  // Connecting MAC and filter
+  //--------------------------
+  ethmac1g.io.rx_axis_tready := FMAC_filter.io.axis_tready
+  FMAC_filter.io.axis_tvalid := ethmac1g.io.rx_axis_tvalid
+  FMAC_filter.io.axis_tkeep := ethmac1g.io.rx_axis_tkeep
+  FMAC_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
+  FMAC_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
+  // Circular buffer for frame holding
+  val CircBuffer = Module(new CircularBuffer(204,datawidth,io.ocp.addrWidth,io.ocp.dataWidth))
+  // Connecting buffer and filter
+  //-----------------------------
+  CircBuffer.io.filter_bus.bits.flushFrame := FMAC_filter.io.filter_bus.bits.flushFrame
+  CircBuffer.io.filter_bus.bits.addHeader := FMAC_filter.io.filter_bus.bits.addHeader
+  CircBuffer.io.filter_bus.bits.goodFrame := FMAC_filter.io.filter_bus.bits.goodFrame
+  CircBuffer.io.filter_bus.bits.tdata := FMAC_filter.io.filter_bus.bits.tdata
+  CircBuffer.io.filter_bus.valid := FMAC_filter.io.filter_bus.valid
+  FMAC_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
+  //----------------------------------
   // Connect the pins straight through
   // Clock and logic
   ethmac1g.io.gtx_clk := io.pins.gtx_clk
@@ -106,7 +120,7 @@ class FMAC(target: String = "SIM", datawidth: Int = 16) extends CoreDevice() {
   ethmac1g.io.logic_clk := clock
   ethmac1g.io.logic_rst := reset
   // Configuration
-  ethmac1g.io.ifg_delay := WireInit(12.U(8.W))
+  ethmac1g.io.ifg_delay := WireInit(12.U(datawidth.W))
   // RGMII Interface
   ethmac1g.io.rgmii_rx_clk := io.pins.rgmii_rx_clk
   ethmac1g.io.rgmii_rxd := io.pins.rgmii_rxd
@@ -115,38 +129,21 @@ class FMAC(target: String = "SIM", datawidth: Int = 16) extends CoreDevice() {
   io.pins.rgmii_txd := ethmac1g.io.rgmii_txd
   io.pins.rgmii_tx_ctl := ethmac1g.io.rgmii_tx_ctl
 
-
   // Default response
   val respReg = RegInit(OcpResp.NULL)
   respReg := OcpResp.NULL
 
   //Initiate states:
   //----------------
-  //Reciever
-
-  val rx_axis_tready_Reg = RegInit(false.B)
-  rx_axis_tready_Reg := false.B
-  ethmac1g.io.rx_axis_tready := rx_axis_tready_Reg
   //Transmitter
   val tx_axis_tvalid_Reg = RegInit(false.B)
   tx_axis_tvalid_Reg := false.B
   ethmac1g.io.tx_axis_tvalid := tx_axis_tvalid_Reg
-  // Data recieved from Verilog Ethernet MAC
-  val dataReader = RegInit(0.U(32.W))
 
   // Data to Verilog Ethernet MAC
   val dataWriter= RegInit(0.U(32.W))
   ethmac1g.io.tx_axis_tlast := dataWriter(30)
   ethmac1g.io.tx_axis_tdata := dataWriter(7,0)
-  /*
-  when(io.ocp.M.Cmd === OcpCmd.RD){
-    //rx_axis_tready_Reg := true.B
-    respReg := OcpResp.DVA
-    dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
-  }
-  */
-  val macIdle :: macWait :: macRead :: Nil = Enum(3)
-  val stateMAC = RegInit(macIdle)
 
   when(io.ocp.M.Cmd === OcpCmd.WR) {
     respReg := OcpResp.DVA
@@ -154,28 +151,5 @@ class FMAC(target: String = "SIM", datawidth: Int = 16) extends CoreDevice() {
     dataWriter := io.ocp.M.Data
   }
 
-  when(stateMAC === macIdle) {
-    when(io.ocp.M.Cmd === OcpCmd.RD) {
-      when(io.ocp.M.Addr(0) === false.B) {
-        stateMAC := macWait
-        rx_axis_tready_Reg := true.B
-      }
-        .otherwise {
-          respReg := OcpResp.DVA
-          dataReader := Cat(ethmac1g.io.tx_axis_tready,0.U(31.W))
-        }
-    }
-  }
-  when(stateMAC === macWait) {
-    stateMAC := macRead
-  }
-  when(stateMAC === macRead) {
-    stateMAC := macIdle
-    respReg := OcpResp.DVA
-    dataReader := Cat(ethmac1g.io.rx_axis_tvalid,Cat(ethmac1g.io.rx_axis_tlast,0.U(31.W)),ethmac1g.io.rx_axis_tdata)
-  }
-  // Connections to master
   io.ocp.S.Resp := respReg
-  io.ocp.S.Data := dataReader
-
 }

@@ -62,16 +62,16 @@ architecture rtl of patmos_top is
 		  io_UartCmp_rx                    : in  std_logic;
 
 	   --Clock and logic
-      io_FMAC_gtx_clk : in std_logic;
-      io_FMAC_gtx_clk90 : in std_logic;
-      io_FMAC_gtx_rst : in std_logic;
+      io_FShark_gtx_clk : in std_logic;
+      io_FShark_gtx_clk90 : in std_logic;
+      io_FShark_gtx_rst : in std_logic;
       -- RGMII interface
-      io_FMAC_rgmii_rx_clk : in std_logic;
-      io_FMAC_rgmii_rxd : in std_logic_vector(3 downto 0);
-      io_FMAC_rgmii_rx_ctl : in std_logic;
-      io_FMAC_rgmii_tx_clk : out std_logic;
-      io_FMAC_rgmii_txd : out std_logic_vector(3 downto 0);
-      io_FMAC_rgmii_tx_ctl : out std_logic;
+      io_FShark_rgmii_rx_clk : in std_logic;
+      io_FShark_rgmii_rxd : in std_logic_vector(3 downto 0);
+      io_FShark_rgmii_rx_ctl : in std_logic;
+      io_FShark_rgmii_tx_clk : out std_logic;
+      io_FShark_rgmii_txd : out std_logic_vector(3 downto 0);
+      io_FShark_rgmii_tx_ctl : out std_logic;
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -172,21 +172,21 @@ begin
     patmos_inst : Patmos port map(
     clock => clk_int,
     reset => int_res,
-    io_FMAC_gtx_clk => clk_125,
-    io_FMAC_gtx_clk90 => clk_125_90,
-    io_FMAC_gtx_rst =>  int_res,
+    io_FShark_gtx_clk => clk_125,
+    io_FShark_gtx_clk90 => clk_125_90,
+    io_FShark_gtx_rst =>  int_res,
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
     io_UartCmp_tx => oUartPins_txd,
     io_UartCmp_rx => iUartPins_rxd,
 
-    io_FMAC_rgmii_rx_clk => ENET0_RX_CLK,
-    io_FMAC_rgmii_rxd => ENET0_RX_DATA,
-    io_FMAC_rgmii_rx_ctl =>  ENET0_RX_DV,
-    io_FMAC_rgmii_tx_clk => ENET0_GTX_CLK,
-    io_FMAC_rgmii_txd => ENET0_TX_DATA,
-    io_FMAC_rgmii_tx_ctl => ENET0_TX_EN,
+    io_FShark_rgmii_rx_clk => ENET0_RX_CLK,
+    io_FShark_rgmii_rxd => ENET0_RX_DATA,
+    io_FShark_rgmii_rx_ctl =>  ENET0_RX_DV,
+    io_FShark_rgmii_tx_clk => ENET0_GTX_CLK,
+    io_FShark_rgmii_txd => ENET0_TX_DATA,
+    io_FShark_rgmii_tx_ctl => ENET0_TX_EN,
 
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,
