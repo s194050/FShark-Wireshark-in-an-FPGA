@@ -102,12 +102,13 @@ class FShark(target: String = "SIM",datawidth: Int = 16) extends CoreDevice {
   FMAC_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
   FMAC_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
-  val CircBuffer = Module(new CircularBuffer(204,datawidth,io.ocp.addrWidth,io.ocp.dataWidth))
+  val CircBuffer = Module(new CircularBuffer(100,datawidth,io.ocp.addrWidth,io.ocp.dataWidth))
   // Connecting buffer and filter
   //-----------------------------
   CircBuffer.io.filter_bus.bits.flushFrame := FMAC_filter.io.filter_bus.bits.flushFrame
   CircBuffer.io.filter_bus.bits.addHeader := FMAC_filter.io.filter_bus.bits.addHeader
   CircBuffer.io.filter_bus.bits.goodFrame := FMAC_filter.io.filter_bus.bits.goodFrame
+  CircBuffer.io.filter_bus.bits.badFrame := FMAC_filter.io.filter_bus.bits.badFrame
   CircBuffer.io.filter_bus.bits.tdata := FMAC_filter.io.filter_bus.bits.tdata
   CircBuffer.io.filter_bus.valid := FMAC_filter.io.filter_bus.valid
   FMAC_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
