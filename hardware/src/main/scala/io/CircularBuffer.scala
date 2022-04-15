@@ -9,7 +9,7 @@ import patmos.Constants.{CLOCK_FREQ, UART_BAUD}
 import ocp._
 
 // Length = 1536
-class CircularBuffer(depth: Int = 100 + 1, datawidth: Int = 16,addrWidth: Int, dataWidth: Int) extends Module() {
+class CircularBuffer(depth: Int = 512, datawidth: Int = 16,addrWidth: Int, dataWidth: Int) extends Module() {
   val bitWidth = log2Ceil(depth)
   val actualDepth = math.pow(2,bitWidth).toInt// Calculate the actual depth, to confer with log2 logic
   val io = IO(new Bundle{
@@ -42,9 +42,9 @@ class CircularBuffer(depth: Int = 100 + 1, datawidth: Int = 16,addrWidth: Int, d
 
 
   // For handling flushing of a bad frame
-  val temp = Mux(io.filter_bus.bits.flushFrame,head-io.filter_bus.bits.tdata,head)
+   val temp = Mux(io.filter_bus.bits.flushFrame,head-(io.filter_bus.bits.tdata + 1.U) , head)
   // For adding the header containing length in front of the frame
-  val Address = Mux(io.filter_bus.bits.addHeader,head-(io.filter_bus.bits.tdata + 2.U),temp)
+  val Address = Mux(io.filter_bus.bits.addHeader,head-(io.filter_bus.bits.tdata + 2.U), temp)
 
   //Status booleans
   // Default response
@@ -64,7 +64,6 @@ class CircularBuffer(depth: Int = 100 + 1, datawidth: Int = 16,addrWidth: Int, d
     io.filter_bus.ready := true.B
   }
 
-
   when(io.filter_bus.valid && !bufferFull){
     when(head === actualDepth){
       head := 1.U
@@ -74,7 +73,7 @@ class CircularBuffer(depth: Int = 100 + 1, datawidth: Int = 16,addrWidth: Int, d
     data(Address) := io.filter_bus.bits.tdata
   }
 
-  when(io.ocp.M.Cmd === OcpCmd.RD && !bufferEmpty){
+  when(io.ocp.M.Cmd === OcpCmd.RD && !bufferEmpty){ // && io.filter_bus.bits.goodFrame When ocp is removed.
     respReg := OcpResp.DVA
     when(tail === actualDepth){
       tail  := 0.U
@@ -84,6 +83,9 @@ class CircularBuffer(depth: Int = 100 + 1, datawidth: Int = 16,addrWidth: Int, d
     bufferValue := data(tail)
   }
 
+  when(io.filter_bus.bits.flushFrame){
+    head := temp
+  }
 
   // Mapping the indices between current head and tail
   // to the 0 to n indices of the buffer

@@ -24,9 +24,8 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
       val tdata = Output(UInt((datawidth).W))
     })
   })
-  // Initialize registers
+  // Initialize counter register
   val cntFrame = RegInit(0.U(datawidth.W))
-  val frameSize = WireInit(0.U(datawidth.W))
   // Initialize booleans
   io.axis_tready := WireInit(false.B)
   io.filter_bus.valid := WireInit(false.B)
@@ -38,6 +37,9 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
 
   // Counter
   when(io.axis_tvalid) {
+    when(io.axis_tkeep === 0.U){ // Increment by one, when byte uneven.S
+      cntFrame := cntFrame + 1.U
+    }
     cntFrame := cntFrame + 2.U // Increment by two as bus width is 16 bit = 2 bytes
   }
 
@@ -56,7 +58,6 @@ when(io.filter_bus.ready) {
       io.filter_bus.bits.addHeader := false.B
       io.axis_tready := false.B
       cntFrame := 0.U
-      frameSize := 0.U
 
       when(io.axis_tvalid) {
         stateBuffer := bufferEvaluate
@@ -70,7 +71,7 @@ when(io.filter_bus.ready) {
       io.filter_bus.valid := true.B
       io.filter_bus.bits.tdata := io.axis_tdata
       when(cntFrame === 18.U) {
-        when(io.axis_tdata === 0x1512.U) {
+        when(io.axis_tdata === 0x1312.U) {
           stateBuffer := bufferGoodFrame
         }.otherwise {
           stateBuffer := bufferBadFrame
@@ -86,9 +87,8 @@ when(io.filter_bus.ready) {
       io.filter_bus.bits.tdata := io.axis_tdata
 
       when(io.axis_tlast) {
-        cntFrame := cntFrame
-        io.axis_tready := false.B
-        frameSize := (cntFrame + 1.U) >> 1
+        cntFrame := cntFrame // Set the counter to the current value at next rising edge
+        io.axis_tready := false.B // Stop recieving from the MAC FIFO
         stateBuffer := bufferAddHeader
       }
     }
@@ -99,8 +99,7 @@ when(io.filter_bus.ready) {
       io.filter_bus.valid := true.B
       io.filter_bus.bits.goodFrame := true.B
       io.filter_bus.bits.addHeader := true.B
-
-      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1
+      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1 // Divide by two and round up
 
 
       stateBuffer := bufferIdle
@@ -108,27 +107,30 @@ when(io.filter_bus.ready) {
     }
 
     is(bufferBadFrame) {
+      // When the frame is bad, such that it is unwanted prepare to flush it from the buffer, and stop sending it
+      // to the buffer.
+      cntFrame := cntFrame // Set the counter constant, as we have stopped sending the frame to the buffer
       io.axis_tready := true.B
       io.filter_bus.valid := false.B
       io.filter_bus.bits.goodFrame := false.B
-      io.filter_bus.bits.badFrame := true.B
+      io.filter_bus.bits.badFrame := true.B // Not necessary but is done for debugging
 
-      when(io.axis_tlast) {
-        cntFrame := cntFrame
+      when(io.axis_tlast) { // Receive data from MAC until tlast is high
+        cntFrame := cntFrame // Set the counter to the current value at next rising edge
         io.axis_tready := false.B
         io.filter_bus.valid := true.B
-        frameSize := (cntFrame + 1.U) >> 1
         stateBuffer := bufferFlushFrame
       }
     }
 
     is(bufferFlushFrame) {
+      cntFrame := cntFrame // This is unnecessary in this state but is done for continuity
       io.axis_tready := true.B
       io.filter_bus.valid := true.B
       io.filter_bus.bits.flushFrame := true.B
       io.filter_bus.bits.goodFrame := false.B
       io.filter_bus.bits.badFrame := true.B
-      io.filter_bus.bits.tdata := frameSize
+      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1
 
       stateBuffer := bufferIdle
     }
