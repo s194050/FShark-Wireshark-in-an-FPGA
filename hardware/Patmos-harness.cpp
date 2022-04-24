@@ -47,6 +47,7 @@ class Emulator
   bool UART_on;
   // RGMII
   bool RGMII_on;
+  bool RGMII_manual;
   int baudrate;
   int freq;
   char in_byte;
@@ -261,6 +262,7 @@ public:
   void RGMII_init()
   {
     RGMII_on = true;
+    RGMII_manual = false;
   }
 
 
@@ -311,6 +313,25 @@ public:
     const int checksum[4] = {0xEE,0x7F,0xEC,0xB0};
     unsigned char byteout = 0;
     int en = 0;
+
+    if(RGMII_manual){
+      struct pollfd pfd;
+      pfd.fd = RGMII_in;
+      pfd.events = POLLIN;
+      if (poll(&pfd, 1, 0) > 0) {
+        unsigned char d;
+        int r = read(RGMII_in, &d, 1);
+        if (r != 0) {
+          if (r != 1) {
+            cerr << "patemu: error: Cannot read UART input" << endl;
+          } else {
+            c -> io_FShark_rgmii_rx_clk = !edge;
+            c -> io_FShark_rgmii_rx_ctl = en;
+            c -> io_FShark_rgmii_rxd = !edge ? d >> 4 : d & 0x0F;
+          }
+        }
+      }
+    }else{
     //RGMII Source (RX)
     if(counter < 0){ // Delay start of RGMII interface simulation
       if(!edge){
@@ -354,7 +375,7 @@ public:
     c -> io_FShark_rgmii_rx_clk = !edge;
     c -> io_FShark_rgmii_rx_ctl = en;
     c -> io_FShark_rgmii_rxd = !edge ? byteout  >> 4 : byteout & 0x0F;
-
+    }
 }
 
   void emu_keys(void){
@@ -1059,7 +1080,7 @@ int main(int argc, char **argv, char **env)
   bool keys = false;
 
   //Parse Arguments
-  while ((opt = getopt(argc, argv, "hvl:iO:I:rk")) != -1){
+  while ((opt = getopt(argc, argv, "hvl:iO:I:L:rk")) != -1){
     switch (opt) {
       case 'v':
         emu->setTrace();
@@ -1098,6 +1119,7 @@ int main(int argc, char **argv, char **env)
       case 'L':
         if (strcmp(optarg, "-") == 0) {
           RGMII_in = STDIN_FILENO;
+          RGMII_manual = true;
         } else {
           RGMII_in = open(optarg, O_RDONLY);
           if (RGMII_in < 0) {
