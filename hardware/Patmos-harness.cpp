@@ -17,12 +17,15 @@ NOTES ON STUFF MISSING FROM THE OLD EMULATOR
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <cstring>
 #include <string>
 #include <libelf.h>
 #include <gelf.h>
 #include <sys/poll.h>
 #include <fcntl.h>
 
+#include "Crc32.h"
 #include "VPatmos.h"
 #include "verilated.h"
 #if VM_TRACE
@@ -312,25 +315,54 @@ public:
     const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55,0xD5};
     const int checksum[4] = {0xEE,0x7F,0xEC,0xB0};
     unsigned char byteout = 0;
+    const char *CrcByte = 0;
     int en = 0;
+    int Crc32 = 0;
+    int Crc32old = 0;
+    unsigned char d;
+    unsigned hexVal;
+    std::stringstream ss;
 
-    if(RGMII_manual){
-      struct pollfd pfd;
-      pfd.fd = RGMII_in;
-      pfd.events = POLLIN;
-      if (poll(&pfd, 1, 0) > 0) {
-        unsigned char d;
-        int r = read(RGMII_in, &d, 1);
-        if (r != 0) {
-          if (r != 1) {
-            cerr << "patemu: error: Cannot read UART input" << endl;
-          } else {
-            c -> io_FShark_rgmii_rx_clk = !edge;
-            c -> io_FShark_rgmii_rx_ctl = en;
-            c -> io_FShark_rgmii_rxd = !edge ? d >> 4 : d & 0x0F;
+
+    if(!RGMII_manual){ // For now manual file input, requires the values to be flipped.
+      if(counter < 0){ // Delay start of RGMII interface simulation
+        if(!edge){
+          counter++;
+      }
+      }else if(counter <= 7){
+      en = 1; // set high for all of frame transmission
+      int r = read(RGMII_in, &d, 1); // Read one byte from frame file
+        if (d == ' ') { // If space is found go to next char
+            int r = read(RGMII_in, &d, 1);
+          }else if(d == '\n'){ // New line indicates end of frame, go to add of IFG delay
+            counter = 8;
+            en = 0;
+            d = 0;
+          }
+          ss << std::hex << d; // Convert ASCII char to hex value
+          ss >> hexVal;
+          byteout = hexVal; // As the value is already a nibble of the hexvalue it can be send as is.
+
+          *CrcByte = hexVal;
+
+          Crc32 = crc32_halfbyte(&CrcByte,1,Crc32old);
+          Crc32old = Crc32;
+
+      }else if(counter >= 8){
+        en = 0; // Enable is low for all of IFG transmission
+        byteout = 0x00; // IFG zeroing
+        cout << Crc32 << endl;
+        if(counter >= (8+12)){
+          counter = 0; // Reset counter frame is sent
+        }else{
+          if(!edge){
+            counter++; // Increment counter for IFG
           }
         }
       }
+      c -> io_FShark_rgmii_rx_clk = !edge;
+      c -> io_FShark_rgmii_rx_ctl = en;
+      c -> io_FShark_rgmii_rxd = byteout;
     }else{
     //RGMII Source (RX)
     if(counter < 0){ // Delay start of RGMII interface simulation
@@ -1052,13 +1084,13 @@ static void help(ostream &out) {
       #ifdef IO_KEYS
       << "  -k            Simulate random input from keys" << endl
       #endif /* IO_KEYS */
+      #ifdef IO_RGMII
+      << "  -L <file>    Read input from file for RGMII <file>" << endl
+      << "  -S <file>    Write output to file for RGMII <file>" << endl
+      #endif
       #ifdef IO_UART
       << "  -I <file>     Read input for UART from file <file>" << endl
       << "  -O <file>     Write output from UART to file <file>" << endl
-      #endif
-      #ifdef IO_RGMII
-      << "   -L <file>    Read input from file for RGMII <file>" << endl
-      << "   -S <file>    Write output to file for RGMII <file>" << endl
       #endif
   ;
 }
@@ -1119,7 +1151,6 @@ int main(int argc, char **argv, char **env)
       case 'L':
         if (strcmp(optarg, "-") == 0) {
           RGMII_in = STDIN_FILENO;
-          RGMII_manual = true;
         } else {
           RGMII_in = open(optarg, O_RDONLY);
           if (RGMII_in < 0) {

@@ -287,6 +287,7 @@ object Config {
       emuConfig.write("#define CORE_COUNT "+coreCount+"\n")
       emuConfig.write("#define ICACHE_"+ICache.typ.toUpperCase+"\n")
       emuConfig.write("#define IO_UART\n")
+      emuConfig.write("#define IO_RGMII\n")
       for (d <- Devs) { emuConfig.write("#define IO_"+d.name.toUpperCase+"\n") }
       emuConfig.write("#define EXTMEM_"+ExtMem.ram.name.toUpperCase+"\n")
       emuConfig.write("#define EXTMEM_ADDR_BITS "+ ExtMemAddrWidth +"\n")
