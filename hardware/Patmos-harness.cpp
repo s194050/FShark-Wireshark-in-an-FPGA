@@ -315,7 +315,7 @@ public:
     const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55,0xD5};
     const int checksum[4] = {0xEE,0x7F,0xEC,0xB0};
     unsigned char byteout = 0;
-    const char *CrcByte = 0;
+    unsigned char CrcByte = 0;
     int en = 0;
     int Crc32 = 0;
     int Crc32old = 0;
@@ -343,7 +343,7 @@ public:
           ss >> hexVal;
           byteout = hexVal; // As the value is already a nibble of the hexvalue it can be send as is.
 
-          *CrcByte = hexVal;
+          CrcByte = hexVal;
 
           Crc32 = crc32_halfbyte(&CrcByte,1,Crc32old);
           Crc32old = Crc32;
