@@ -385,6 +385,7 @@ public:
     unsigned char byteout = 0;
     // For handling swap of nibble
     static bool readStatus = false;
+    static int cnter = 0;
     static unsigned char highNibble = 0;
     static unsigned char lowNibble = 0;
     static unsigned char space = 0;
@@ -418,11 +419,19 @@ public:
         }
 
         byteout = hex2byte(highNibble,lowNibble); // As the value is already a nibble of the hexvalue it can be send as is.
-        //cout << "Byteout: " << char(byteout) << " High: " << int(highNibble) << " Low: " << int(lowNibble) << endl;
+        //cout << "Byteout: " << int(byteout) << " High: " << int(highNibble) << " Low: " << int(lowNibble) << endl;
 
         //cout << "High: " << int(highNibble) << "Low: " << int(lowNibble) << "Space: " << int(space) << endl;
-        Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old);
-        Crc32old = Crc32;
+        if(!edge){
+          Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old);
+          Crc32old = Crc32;
+        }
+       /* cnter++;
+        if(cnter > 500){
+          while(true);
+        }
+        */
+
         if(!edge){
           if(space == '\n'){ // New line indicates end of frame, go to add of IFG delay
             counter = 9;
