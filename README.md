@@ -11,6 +11,8 @@ contains build instructions in Section 5.
 For questions and discussions join the Patmos mailing list at:
 https://groups.yahoo.com/group/patmos-processor/
 
+Link to T-CREST Patmos: https://github.com/t-crest/patmos
+
 What is Fshark?
 ===============
 Fshark is an opensource hardware implementation of Wireshark. This repository contains, all the specific files to making Fshark work with Patmos, as well as all functionallity.
