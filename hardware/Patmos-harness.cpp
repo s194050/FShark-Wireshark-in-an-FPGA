@@ -17,15 +17,15 @@ NOTES ON STUFF MISSING FROM THE OLD EMULATOR
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <cstring>
+#include <charconv>
 #include <string>
 #include <libelf.h>
 #include <gelf.h>
 #include <sys/poll.h>
 #include <fcntl.h>
 
-#include "Crc32.h"
+
 #include "VPatmos.h"
 #include "verilated.h"
 #if VM_TRACE
@@ -72,6 +72,8 @@ class Emulator
   unsigned long c80 = c80_period;
   unsigned long c125 = c125_period;
   unsigned long c125_90 = c125_90_period + c125_90_period*0.5;
+  /// zlib's CRC32 polynomial
+  const uint32_t Polynomial = 0xEDB88320;
 
   ostream *outputTarget = &std::cout;
 
@@ -98,6 +100,7 @@ public:
 
     //for RGMII
     RGMII_on = false;
+    RGMII_manual = false;
 
     #ifdef EXTMEM_SSRAM32CTRL
     ram_buf = (uint32_t *)calloc(1 << EXTMEM_ADDR_BITS, sizeof(uint32_t));
@@ -265,7 +268,10 @@ public:
   void RGMII_init()
   {
     RGMII_on = true;
-    RGMII_manual = false;
+  }
+
+  void setRGMIIstatus(){
+    RGMII_manual = true;
   }
 
 
@@ -307,6 +313,68 @@ public:
       }
     }
   }
+    /// compute CRC32 (byte algorithm) without lookup tables
+    // Copyright (c) 2011-2019 Stephan Brumme. All rights reserved.
+    // Slicing-by-16 contributed by Bulat Ziganshin
+    // Tableless bytewise CRC contributed by Hagai Gold
+    // see http://create.stephan-brumme.com/disclaimer.html
+    //
+    uint32_t crc32_1byte_tableless(const void* data, size_t length, uint32_t previousCrc32){
+    uint32_t crc = ~previousCrc32; // same as previousCrc32 ^ 0xFFFFFFFF
+    const uint8_t* current = (const uint8_t*) data;
+
+    while (length-- != 0)
+    {
+      uint8_t s = uint8_t(crc) ^ *current++;
+
+      // Hagai Gold made me aware of this table-less algorithm and send me code
+
+      // polynomial 0xEDB88320 can be written in binary as 11101101101110001000001100100000b
+      // reverse the bits (or just assume bit 0 is the first one)
+      // and we have bits set at position 0, 1, 2, 4, 5, 7, 8, 10, 11, 12, 16, 22, 23, 26
+      // => those are the shift offsets:
+      //crc = (crc >> 8) ^
+      //       t ^
+      //      (t >>  1) ^ (t >>  2) ^ (t >>  4) ^ (t >>  5) ^  // == y
+      //      (t >>  7) ^ (t >>  8) ^ (t >> 10) ^ (t >> 11) ^  // == y >> 6
+      //      (t >> 12) ^ (t >> 16) ^                          // == z
+      //      (t >> 22) ^ (t >> 26) ^                          // == z >> 10
+      //      (t >> 23);
+
+      // the fastest I can come up with:
+      uint32_t low = (s ^ (s << 6)) & 0xFF;
+      uint32_t a   = (low * ((1 << 23) + (1 << 14) + (1 << 2)));
+      crc = (crc >> 8) ^
+            (low * ((1 << 24) + (1 << 16) + (1 << 8))) ^
+            a ^
+            (a >> 1) ^
+            (low * ((1 << 20) + (1 << 12)           )) ^
+            (low << 19) ^
+            (low << 17) ^
+            (low >>  2);
+
+      // Hagai's code:
+      /*uint32_t t = (s ^ (s << 6)) << 24;
+
+      // some temporaries to optimize XOR
+      uint32_t x = (t >> 1) ^ (t >> 2);
+      uint32_t y = x ^ (x >> 3);
+      uint32_t z = (t >> 12) ^ (t >> 16);
+
+      crc = (crc >> 8) ^
+            t ^ (t >> 23) ^
+            y ^ (y >>  6) ^
+            z ^ (z >> 10);*/
+    }
+
+    return ~crc; // same as crc ^ 0xFFFFFFFF
+  }
+    // Combine two nibbles to form a byte
+  unsigned char hex2byte (unsigned char highNibble, unsigned char lowNibble){  
+    if (highNibble > '9') highNibble -= 7;   // Fix range
+    if (lowNibble > '9') lowNibble -= 7;   // Fix range 
+    return (highNibble << 4) | (lowNibble & 0x0F);   // Combine nibbles to get resulting byte
+  }
 
   // Add read file functionallity of frames, and include CRC calculations aswell.
   void emu_RGMII(int RGMII_in,int RGMII_out,int edge) {
@@ -315,44 +383,67 @@ public:
     const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55,0xD5};
     const int checksum[4] = {0xEE,0x7F,0xEC,0xB0};
     unsigned char byteout = 0;
-    unsigned char CrcByte = 0;
+    // For handling swap of nibble
+    static bool readStatus = false;
+    static unsigned char highNibble = 0;
+    static unsigned char lowNibble = 0;
+    static unsigned char space = 0;
     int en = 0;
-    int Crc32 = 0;
-    int Crc32old = 0;
-    unsigned char d;
-    unsigned hexVal;
-    std::stringstream ss;
+    static int Crc32 = 0;
+    static int Crc32old = 0;
+  
 
 
-    if(!RGMII_manual){ // For now manual file input, requires the values to be flipped.
+    if(RGMII_manual){ // For now manual file input, requires only the frame with space seperation
       if(counter < 0){ // Delay start of RGMII interface simulation
         if(!edge){
           counter++;
-      }
+        }
       }else if(counter <= 7){
-      en = 1; // set high for all of frame transmission
-      int r = read(RGMII_in, &d, 1); // Read one byte from frame file
-        if (d == ' ') { // If space is found go to next char
-            int r = read(RGMII_in, &d, 1);
-          }else if(d == '\n'){ // New line indicates end of frame, go to add of IFG delay
-            counter = 8;
-            en = 0;
-            d = 0;
+        en = 1; // set high for all of frame transmission
+        byteout = preamble[counter];
+        if(!edge){
+          counter++; // Increment counter
+        }
+      }else if(counter <= 8){
+        en = 1; // set high for all of frame transmission
+      
+        if(!readStatus){
+          int r = read(RGMII_in, &highNibble,1); // Read one nibble from frame file
+          int h = read(RGMII_in, &lowNibble,1);
+          int v = read(RGMII_in, &space,1);
+          readStatus = true;
+        }else{
+          readStatus = false;
+        }
+
+        byteout = hex2byte(highNibble,lowNibble); // As the value is already a nibble of the hexvalue it can be send as is.
+        //cout << "Byteout: " << char(byteout) << " High: " << int(highNibble) << " Low: " << int(lowNibble) << endl;
+
+        //cout << "High: " << int(highNibble) << "Low: " << int(lowNibble) << "Space: " << int(space) << endl;
+        Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old);
+        Crc32old = Crc32;
+        if(!edge){
+          if(space == '\n'){ // New line indicates end of frame, go to add of IFG delay
+            counter = 9;
+            highNibble = 0;
+            lowNibble = 0;
+            space = 0;
+            readStatus = false;
+            cout << "CrcValue:" << int(Crc32) << endl;
           }
-          ss << std::hex << d; // Convert ASCII char to hex value
-          ss >> hexVal;
-          byteout = hexVal; // As the value is already a nibble of the hexvalue it can be send as is.
-
-          CrcByte = hexVal;
-
-          Crc32 = crc32_halfbyte(&CrcByte,1,Crc32old);
-          Crc32old = Crc32;
-
-      }else if(counter >= 8){
+        }
+      }else if(counter < 13){
+        en = 1;
+        byteout = Crc32 & 0xFF;
+        if(!edge){
+          Crc32 = Crc32 >> 8;
+          counter++; // Increment counter
+        }
+      }else{
         en = 0; // Enable is low for all of IFG transmission
         byteout = 0x00; // IFG zeroing
-        cout << Crc32 << endl;
-        if(counter >= (8+12)){
+        if(counter >= (13+12)){
           counter = 0; // Reset counter frame is sent
         }else{
           if(!edge){
@@ -362,7 +453,8 @@ public:
       }
       c -> io_FShark_rgmii_rx_clk = !edge;
       c -> io_FShark_rgmii_rx_ctl = en;
-      c -> io_FShark_rgmii_rxd = byteout;
+      c -> io_FShark_rgmii_rxd = !edge ? byteout >> 4:  byteout & 0x0F ;
+
     }else{
     //RGMII Source (RX)
     if(counter < 0){ // Delay start of RGMII interface simulation
@@ -1149,6 +1241,7 @@ int main(int argc, char **argv, char **env)
       #endif
       #ifdef IO_RGMII
       case 'L':
+        emu->setRGMIIstatus();
         if (strcmp(optarg, "-") == 0) {
           RGMII_in = STDIN_FILENO;
         } else {
