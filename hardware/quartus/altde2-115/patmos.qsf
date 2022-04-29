@@ -242,6 +242,7 @@ set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/rtl/ssi
 set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/rtl/iddr.v
 set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/lib/axis/rtl/axis_async_fifo_adapter.v
 set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/lib/axis/rtl/axis_async_fifo.v
+set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/lib/axis/rtl/axis_adapter.v
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
@@ -367,6 +368,7 @@ set_instance_assignment -name FAST_INPUT_REGISTER ON -to "Patmos:patmos_inst|Pat
 
 set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+
 
 
 

@@ -44,9 +44,9 @@
   </Dev>
   <Dev DevType="FShark" entity="FShark" iface="OcpCore">
     <params>
-  	<param name="target" value="SIM" />
+  	<param name="target" value="ALTERA" />
     <param name="datawidth" value="16" />
     </params>
-  </Dev> 
+  </Dev>
   </Devs>
 </patmos>

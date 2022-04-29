@@ -184,9 +184,9 @@ begin
     io_FShark_rgmii_rx_clk => ENET0_RX_CLK,
     io_FShark_rgmii_rxd => ENET0_RX_DATA,
     io_FShark_rgmii_rx_ctl =>  ENET0_RX_DV,
-    io_FShark_rgmii_tx_clk => ENET0_GTX_CLK,
-    io_FShark_rgmii_txd => ENET0_TX_DATA,
-    io_FShark_rgmii_tx_ctl => ENET0_TX_EN,
+    io_FShark_rgmii_tx_clk => open, -- ENET0_GTX_CLK
+    io_FShark_rgmii_txd => open, -- ENET0_TX_DATA
+    io_FShark_rgmii_tx_ctl => open, --ENET0_TX_EN
 
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,
@@ -202,7 +202,7 @@ begin
     );
 
   -- Ethernet Pass-through
-  ENET1_GTX_CLK <= ENET0_RX_CLK; 
+  ENET1_GTX_CLK <= ENET0_RX_CLK;
   ENET1_TX_DATA <= ENET0_RX_DATA;
   ENET1_TX_EN <= ENET0_RX_DV;
   ENET0_GTX_CLK <= ENET1_RX_CLK;

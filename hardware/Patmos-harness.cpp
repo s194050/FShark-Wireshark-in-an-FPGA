@@ -370,9 +370,9 @@ public:
     return ~crc; // same as crc ^ 0xFFFFFFFF
   }
     // Combine two nibbles to form a byte
-  unsigned char hex2byte (unsigned char highNibble, unsigned char lowNibble){  
+  unsigned char hex2byte (unsigned char highNibble, unsigned char lowNibble){
     if (highNibble > '9') highNibble -= 7;   // Fix range
-    if (lowNibble > '9') lowNibble -= 7;   // Fix range 
+    if (lowNibble > '9') lowNibble -= 7;   // Fix range
     return (highNibble << 4) | (lowNibble & 0x0F);   // Combine nibbles to get resulting byte
   }
 
@@ -391,7 +391,7 @@ public:
     static unsigned char space = 0;
     static int Crc32 = 0;
     static int Crc32old = 0;
-  
+
 
 
     if(RGMII_manual){ // For now manual file input, requires only the frame with space seperation
@@ -407,7 +407,7 @@ public:
         }
       }else if(counter <= 8){
         en = 1; // set high for all of frame transmission
-      
+
         if(!readStatus){
           int r = read(RGMII_in, &highNibble,1); // Read one nibble from frame file
           int h = read(RGMII_in, &lowNibble,1);
@@ -421,9 +421,9 @@ public:
         //cout << "Byteout: " << int(byteout) << " High: " << int(highNibble) << " Low: " << int(lowNibble) << endl;
 
         //cout << "High: " << int(highNibble) << "Low: " << int(lowNibble) << "Space: " << int(space) << endl;
-    
+
         if(!edge){
-          Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old); // Calculate Crc32 
+          Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old); // Calculate Crc32
           Crc32old = Crc32; // Save the current value, for use next calculation
 
           if(space == '\n'){ // New line indicates end of frame, go to add of Crc32
@@ -443,6 +443,8 @@ public:
           counter++; // Increment counter
         }
       }else{
+        Crc32 = 0;
+        Crc32old = 0;
         en = 0; // Enable is low for all of IFG transmission
         byteout = 0x00; // IFG zeroing
         if(counter >= (13+12)){
