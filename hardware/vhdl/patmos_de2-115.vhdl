@@ -21,6 +21,7 @@ entity patmos_top is
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
     iUartPins_rxd : in  std_logic;
+    oGpioPins : out std_logic_vector(11 downto 0);
     oSRAM_A : out std_logic_vector(19 downto 0);
     SRAM_DQ : inout std_logic_vector(15 downto 0);
     oSRAM_CE_N : out std_logic;
@@ -208,5 +209,12 @@ begin
   ENET0_GTX_CLK <= ENET1_RX_CLK;
   ENET0_TX_DATA <= ENET1_RX_DATA;
   ENET0_TX_EN <= ENET1_RX_DV;
+
+  oGpioPins(0) <= ENET0_RX_CLK;
+  oGpioPins(4 downto 1) <= ENET0_RX_DATA;
+  oGpioPins(5) <=  ENET0_RX_DV;
+  oGpioPins(6) <= ENET1_RX_CLK;
+  oGpioPins(10 downto 7) <= ENET1_RX_DATA;
+  oGpioPins(11) <= ENET1_RX_DV;
 
 end architecture rtl;
