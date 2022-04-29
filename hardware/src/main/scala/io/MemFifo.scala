@@ -60,7 +60,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
       }
     }
     is(valid) {
-      when(io.deq.ready && io.ocp.M.Cmd === OcpCmd.RD) {
+      when(io.ocp.M.Cmd === OcpCmd.RD) {
         when(!emptyReg) {
           respReg := OcpResp.DVA
           stateReg := valid
@@ -77,7 +77,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
 
     }
     is(full) {
-      when(io.deq.ready  && io.ocp.M.Cmd === OcpCmd.RD) {
+      when(io.ocp.M.Cmd === OcpCmd.RD) { // io.deq.ready
         when(!emptyReg) {
           respReg := OcpResp.DVA
           stateReg := valid
@@ -94,7 +94,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
 
   //io.deq.bits := Mux(stateReg === valid, data, shadowReg)
   io.enq.ready := !fullReg
-  io.deq.valid := stateReg === valid || stateReg === full
+  //io.deq.valid := stateReg === valid || stateReg === full
 
   // Connections to master
   io.ocp.S.Resp := respReg

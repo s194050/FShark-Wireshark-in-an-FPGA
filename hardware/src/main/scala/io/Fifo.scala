@@ -12,7 +12,7 @@ import ocp._
   */
 class FifoIO[T <: Data](private val gen: T, addrWidth: Int, dataWidth: Int) extends Bundle {
   val enq = Flipped(new DecoupledIO(gen))
-  val deq = new DecoupledIO(gen)
+  //val deq = new DecoupledIO(gen)
   val ocp = new OcpCoreSlavePort(addrWidth,dataWidth)
 }
 

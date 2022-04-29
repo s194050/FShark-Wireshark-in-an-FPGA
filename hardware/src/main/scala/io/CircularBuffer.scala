@@ -9,11 +9,10 @@ import patmos.Constants.{CLOCK_FREQ, UART_BAUD}
 import ocp._
 
 // Length = 1536
-class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataWidth: Int) extends Module() {
+class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val bitWidth = log2Ceil(depth)
   val actualDepth = math.pow(2,bitWidth).toInt// Calculate the actual depth, to confer with log2 logic
   val io = IO(new Bundle{
-    val ocp = new OcpCoreSlavePort(addrWidth,dataWidth)
     val bufferData = Output(Vec(actualDepth, UInt(datawidth.W)))
     val bufferLength = Output(UInt((bitWidth).W))
 
@@ -24,6 +23,8 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataW
       val addHeader = Output(Bool())
       val tdata = Output(UInt(datawidth.W))
     }))
+
+    val enq = new DecoupledIO(UInt(datawidth.W))
   })
   print(actualDepth)
   //Initialize signals
@@ -47,9 +48,6 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataW
   val Address = Mux(io.filter_bus.bits.addHeader,head-(io.filter_bus.bits.tdata + 2.U), temp)
 
   //Status booleans
-  // Default response
-  val respReg = RegInit(OcpResp.NULL)
-  respReg := OcpResp.NULL
 
   // Check buffer status
   bufferEmpty := io.bufferLength === 0.U
@@ -57,6 +55,11 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataW
   //----------------
   bufferFull := io.bufferLength >= actualDepth - 1.U
   bufferFullNext := io.bufferLength >= actualDepth - 2.U
+  io.enq.valid := WireInit(false.B)
+
+  when(bufferEmpty){
+    io.enq.valid := false.B
+  }
 
   when(bufferFull){
     io.filter_bus.ready := false.B
@@ -73,17 +76,18 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataW
     data(Address) := io.filter_bus.bits.tdata
   }
 
-  when(io.ocp.M.Cmd === OcpCmd.RD && !bufferEmpty){ // && io.filter_bus.bits.goodFrame When ocp is removed.
-    respReg := OcpResp.DVA
+  when(io.enq.ready && !bufferEmpty && io.filter_bus.bits.goodFrame){ // && io.filter_bus.bits.goodFrame When ocp is removed.
     when(tail === actualDepth){
       tail  := 0.U
     }.otherwise{
       tail := tail + 1.U
     }
-    bufferValue := data(tail)
+    io.enq.valid := true.B
+    io.enq.bits := data(tail)
   }
 
   when(io.filter_bus.bits.flushFrame){
+    io.enq.valid := false.B
     head := temp
   }
 
@@ -111,8 +115,4 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataW
   }.otherwise {
     io.bufferLength := (difference)
   }
-
-  // Connections to master
-  io.ocp.S.Resp := respReg
-  io.ocp.S.Data := bufferValue
 }
