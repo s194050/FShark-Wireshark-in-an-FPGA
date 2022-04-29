@@ -5,12 +5,13 @@ package io
 
 import chisel3._
 import chisel3.util._
+import ocp._
 
 /**
   * FIFO with memory and read and write pointers.
   * Extra shadow register to handle the one cycle latency of the synchronous memory.
   */
-class MemFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int) {
+class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) extends Fifo(gen: T, depth: Int, addrWidth: Int, dataWidth: Int) {
 
   def counter(depth: Int, incr: Bool): (UInt, UInt) = {
     val cntReg = RegInit(0.U(log2Ceil(depth).W))
@@ -35,6 +36,10 @@ class MemFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int) {
   val stateReg = RegInit(idle)
   val shadowReg = Reg(gen)
 
+  // Default response
+  val respReg = RegInit(OcpResp.NULL)
+  respReg := OcpResp.NULL
+
   when(io.enq.valid && !fullReg) {
     mem.write(writePtr, io.enq.bits)
     emptyReg := false.B
@@ -55,8 +60,9 @@ class MemFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int) {
       }
     }
     is(valid) {
-      when(io.deq.ready) {
+      when(io.deq.ready && io.ocp.M.Cmd === OcpCmd.RD) {
         when(!emptyReg) {
+          respReg := OcpResp.DVA
           stateReg := valid
           fullReg := false.B
           emptyReg := nextRead === writePtr
@@ -71,8 +77,9 @@ class MemFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int) {
 
     }
     is(full) {
-      when(io.deq.ready) {
+      when(io.deq.ready  && io.ocp.M.Cmd === OcpCmd.RD) {
         when(!emptyReg) {
+          respReg := OcpResp.DVA
           stateReg := valid
           fullReg := false.B
           emptyReg := nextRead === writePtr
@@ -85,7 +92,11 @@ class MemFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int) {
     }
   }
 
-  io.deq.bits := Mux(stateReg === valid, data, shadowReg)
+  //io.deq.bits := Mux(stateReg === valid, data, shadowReg)
   io.enq.ready := !fullReg
   io.deq.valid := stateReg === valid || stateReg === full
+
+  // Connections to master
+  io.ocp.S.Resp := respReg
+  io.ocp.S.Data := Mux(stateReg === valid, data, shadowReg)
 }
