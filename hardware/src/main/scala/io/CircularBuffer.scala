@@ -9,7 +9,7 @@ import patmos.Constants.{CLOCK_FREQ, UART_BAUD}
 import ocp._
 
 // Length = 1536
-class CircularBuffer(depth: Int = 1000, datawidth: Int = 16,addrWidth: Int, dataWidth: Int) extends Module() {
+class CircularBuffer(depth: Int = 500, datawidth: Int = 16,addrWidth: Int, dataWidth: Int) extends Module() {
   val bitWidth = log2Ceil(depth)
   val actualDepth = math.pow(2,bitWidth).toInt// Calculate the actual depth, to confer with log2 logic
   val io = IO(new Bundle{

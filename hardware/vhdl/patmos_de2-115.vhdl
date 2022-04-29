@@ -201,4 +201,12 @@ begin
 
     );
 
+  -- Ethernet Pass-through
+  ENET1_GTX_CLK <= ENET0_RX_CLK; 
+  ENET1_TX_DATA <= ENET0_RX_DATA;
+  ENET1_TX_EN <= ENET0_RX_DV;
+  ENET0_GTX_CLK <= ENET1_RX_CLK;
+  ENET0_TX_DATA <= ENET1_RX_DATA;
+  ENET0_TX_EN <= ENET1_RX_DV;
+
 end architecture rtl;
