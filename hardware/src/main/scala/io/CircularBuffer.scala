@@ -28,6 +28,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   })
   print(actualDepth)
   //Initialize signals
+  val readFrom = RegInit(false.B)
   val bufferFull = WireInit(false.B)
   val bufferEmpty = WireInit(true.B)
   val bufferFullNext = WireInit(false.B)
@@ -41,7 +42,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val head = RegInit(1.U(bitWidth.W))
   val tail = RegInit(0.U(bitWidth.W))
   val bufferValue = RegInit(0.U(datawidth.W))
-
+  val readValue = RegInit(0.U(datawidth.W))
 
   // For handling flushing of a bad frame
    val temp = Mux(io.filter_bus.bits.flushFrame,head-(io.filter_bus.bits.tdata + 1.U) , head)
@@ -58,6 +59,11 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
 
   when(bufferEmpty){
     io.deq.valid := false.B
+  }
+
+  when(io.filter_bus.bits.addHeader){
+    readFrom := true.B
+    readValue := Address
   }
 
   when(bufferFull){
