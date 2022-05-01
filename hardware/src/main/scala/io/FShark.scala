@@ -106,9 +106,9 @@ class FShark(target: String = "SIM",datawidth: Int = 16) extends CoreDevice {
   val memFifo = Module(new MemFifo(UInt(datawidth.W),200,io.ocp.addrWidth,io.ocp.dataWidth))
   // Connecting buffer and FIFO
   //---------------------------
-  CircBuffer.io.enq.ready := memFifo.io.enq.ready
-  memFifo.io.enq.valid := CircBuffer.io.enq.valid
-  memFifo.io.enq.bits := CircBuffer.io.enq.bits
+  CircBuffer.io.deq.ready := memFifo.io.enq.ready
+  memFifo.io.enq.valid := CircBuffer.io.deq.valid
+  memFifo.io.enq.bits := CircBuffer.io.deq.bits
   // Connecting OCP and FIFO
   //------------------------
   memFifo.io.ocp.M := io.ocp.M

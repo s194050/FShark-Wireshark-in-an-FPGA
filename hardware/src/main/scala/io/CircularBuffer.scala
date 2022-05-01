@@ -24,7 +24,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
       val tdata = Output(UInt(datawidth.W))
     }))
 
-    val enq = new DecoupledIO(UInt(datawidth.W))
+    val deq = new DecoupledIO(UInt(datawidth.W))
   })
   print(actualDepth)
   //Initialize signals
@@ -33,6 +33,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val bufferFullNext = WireInit(false.B)
   val bufferEmptyNext = WireInit(false.B)
   io.filter_bus.ready := WireInit(false.B)
+  io.deq.valid := WireInit(false.B)
   /*
   IO's  to push and pop and get status
   */
@@ -48,17 +49,15 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val Address = Mux(io.filter_bus.bits.addHeader,head-(io.filter_bus.bits.tdata + 2.U), temp)
 
   //Status booleans
-
   // Check buffer status
   bufferEmpty := io.bufferLength === 0.U
   bufferEmptyNext := io.bufferLength - 1.U === 0.U
   //----------------
   bufferFull := io.bufferLength >= actualDepth - 1.U
   bufferFullNext := io.bufferLength >= actualDepth - 2.U
-  io.enq.valid := WireInit(false.B)
 
   when(bufferEmpty){
-    io.enq.valid := false.B
+    io.deq.valid := false.B
   }
 
   when(bufferFull){
@@ -76,18 +75,18 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
     data(Address) := io.filter_bus.bits.tdata
   }
 
-  when(io.enq.ready && !bufferEmpty && io.filter_bus.bits.goodFrame){ // && io.filter_bus.bits.goodFrame When ocp is removed.
+  when(io.deq.ready && !bufferEmpty && io.filter_bus.bits.goodFrame){ // && io.filter_bus.bits.goodFrame When ocp is removed.
     when(tail === actualDepth){
       tail  := 0.U
     }.otherwise{
       tail := tail + 1.U
     }
-    io.enq.valid := true.B
-    io.enq.bits := data(tail)
+    io.deq.valid := true.B
+    bufferValue := data(tail)
   }
 
   when(io.filter_bus.bits.flushFrame){
-    io.enq.valid := false.B
+    io.deq.valid := false.B
     head := temp
   }
 
@@ -115,4 +114,6 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   }.otherwise {
     io.bufferLength := (difference)
   }
+
+  io.deq.bits := bufferValue
 }
