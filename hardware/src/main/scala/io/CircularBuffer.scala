@@ -43,6 +43,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val tail = RegInit(0.U(bitWidth.W))
   val bufferValue = RegInit(0.U(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
+  val counter = RegInit(0.U(bitWidth.W))
 
   // For handling flushing of a bad frame
    val temp = Mux(io.filter_bus.bits.flushFrame,head-(io.filter_bus.bits.tdata + 1.U) , head)
@@ -61,10 +62,12 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
     io.deq.valid := false.B
   }
 
-  when(io.filter_bus.bits.addHeader){
+  when(io.filter_bus.bits.addHeader && io.deq.ready){
+    io.deq.valid := true.B
     readFrom := true.B
-    readValue := Address
+    readValue := io.filter_bus.bits.tdata
   }
+  
 
   when(bufferFull){
     io.filter_bus.ready := false.B
@@ -81,14 +84,27 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
     data(Address) := io.filter_bus.bits.tdata
   }
 
-  when(io.deq.ready && !bufferEmpty && io.filter_bus.bits.goodFrame){ // && io.filter_bus.bits.goodFrame When ocp is removed.
-    when(tail === actualDepth){
-      tail  := 0.U
+  when(io.deq.ready && !bufferEmpty){ // && io.filter_bus.bits.goodFrame When ocp is removed.
+    when(readFrom){
+      when(counter === readValue && counter =/= 0.U) {
+        io.deq.valid := false.B
+        readFrom := false.B
+        counter := 0.U
+        readValue := 0.U
+      }.otherwise {
+        counter := counter + 1.U
+      }
+      io.deq.valid := true.B
+
+      when(tail === actualDepth){
+        tail  := 0.U
+      }.otherwise{
+        tail := tail + 1.U
+      }
+      bufferValue := data(tail)
     }.otherwise{
-      tail := tail + 1.U
+      io.deq.valid := false.B
     }
-    io.deq.valid := true.B
-    bufferValue := data(tail)
   }
 
   when(io.filter_bus.bits.flushFrame){
