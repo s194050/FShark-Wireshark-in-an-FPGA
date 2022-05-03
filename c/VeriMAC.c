@@ -1,6 +1,6 @@
 #include <machine/patmos.h>
 #include <machine/spm.h>
-#include "include/bootable.h"
+//#include "include/bootable.h"
 
 void tohex(int in, char * out)
 {
@@ -20,21 +20,28 @@ int main(){
 	volatile _SPM int *uart_data = (volatile _SPM int *) 0xF0080004;
 	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00b0000;
 	int packet;
+	int frameLength;
 	char str[5];
+	
 
 	for (;;) {
-		packet = *io_ptr;
+		frameLength = *io_ptr;
+		printf("Printing a frame of length: %d\n", frameLength);
 
-        tohex(packet,str);
+		for(int i = 0; i <= frameLength; i++){
+			packet = *io_ptr;
 
-		*uart_data = str[2];
-		*uart_data = str[3];
-		*uart_data = str[4];
-		*uart_data = str[0];
-		*uart_data = str[1];
-		*uart_data = str[4];
-  		while ((*uart_status & 0x01) == 0) {
-  		;
-  		}
+			tohex(packet,str);
+
+			*uart_data = str[2];
+			*uart_data = str[3];
+			*uart_data = str[4];
+			*uart_data = str[0];
+			*uart_data = str[1];
+			*uart_data = str[4];
+			while ((*uart_status & 0x01) == 0) {
+			;
+			}
+		}
 	}
 }

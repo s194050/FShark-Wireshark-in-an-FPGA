@@ -23,7 +23,6 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
       val addHeader = Output(Bool())
       val tdata = Output(UInt(datawidth.W))
     }))
-    val readFrameLength = Output(Bool())
     val deq = new DecoupledIO(UInt(datawidth.W))
   })
   print(actualDepth)
@@ -33,7 +32,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val bufferEmpty = WireInit(true.B)
   val bufferFullNext = WireInit(false.B)
   val bufferEmptyNext = WireInit(false.B)
-  io.readFrameLength := WireInit(false.B)
+  val readFrameLength = WireInit(false.B) // To create a one clock cycle delay
   io.filter_bus.ready := WireInit(false.B)
   io.deq.valid := WireInit(false.B)
   /*
@@ -42,7 +41,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val data = Reg(Vec(actualDepth, UInt(datawidth.W)))
   val head = RegInit(1.U(bitWidth.W))
   val tail = RegInit(0.U(bitWidth.W))
-  val bufferValue = RegInit(0.U(datawidth.W))
+  val bufferValue = WireInit(0.U(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
   val counter = RegInit(0.U(bitWidth.W))
 
@@ -63,13 +62,12 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
     io.deq.valid := false.B
   }
 
+
   when(io.filter_bus.bits.addHeader && io.deq.ready){
-    io.deq.valid := true.B
+    io.deq.valid := false.B
     readFrom := true.B
     readValue := io.filter_bus.bits.tdata
-    io.readFrameLength := true.B
   }
-  
 
   when(bufferFull){
     io.filter_bus.ready := false.B

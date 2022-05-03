@@ -5,6 +5,7 @@ package io
 
 import chisel3._
 import chisel3.util._
+import firrtl.FirrtlProtos.Firrtl.Statement.When
 import ocp._
 
 /**
@@ -21,9 +22,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
     }
     (cntReg, nextVal)
   }
-  val frameLengthCounter = RegInit(0.U(16.W))
   val mem = SyncReadMem(depth, gen)
-
   val incrRead = WireInit(false.B)
   val incrWrite = WireInit(false.B)
   val (readPtr, nextRead) = counter(depth, incrRead)
@@ -41,22 +40,25 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
   respReg := OcpResp.NULL
 
   when(io.enq.valid && !fullReg) {
-    mem.write(writePtr, io.enq.bits)
-    emptyReg := false.B
-    fullReg := nextWrite === readPtr
-    incrWrite := true.B
+      mem.write(writePtr, io.enq.bits)
+      emptyReg := false.B
+      fullReg := nextWrite === readPtr
+      incrWrite := true.B
+
   }
 
   val data = mem.read(readPtr)
 
-  // Handling of the one cycle memory latency with an additional output register
   switch(stateReg) {
     is(idle) {
-      when(!emptyReg) {
-        stateReg := valid
-        fullReg := false.B
-        emptyReg := nextRead === writePtr
-        incrRead := true.B
+      when(io.ocp.M.Cmd === OcpCmd.RD) {
+        when(!emptyReg) {
+          respReg := OcpResp.DVA
+          stateReg := valid
+          fullReg := false.B
+          emptyReg := nextRead === writePtr
+          incrRead := true.B
+        }
       }
     }
     is(valid) {
@@ -67,7 +69,6 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
           fullReg := false.B
           emptyReg := nextRead === writePtr
           incrRead := true.B
-          frameLengthCounter := frameLengthCounter + 1.U
         }.otherwise {
           stateReg := idle
         }
@@ -85,7 +86,6 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
           fullReg := false.B
           emptyReg := nextRead === writePtr
           incrRead := true.B
-          frameLengthCounter := frameLengthCounter + 1.U
         }.otherwise {
           stateReg := idle
         }
@@ -94,10 +94,8 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
     }
   }
 
-  //io.deq.bits := Mux(stateReg === valid, data, shadowReg)
-  io.enq.ready := !fullReg
-  //io.deq.valid := stateReg === valid || stateReg === full
 
+  io.enq.ready := !fullReg
   // Connections to master
   io.ocp.S.Resp := respReg
   io.ocp.S.Data := Mux(stateReg === valid, data, shadowReg)

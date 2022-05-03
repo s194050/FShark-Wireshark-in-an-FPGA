@@ -5,7 +5,7 @@ import ocp._
 
 object FShark extends DeviceObject {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
-  var target = "ALTERA"
+  var target = "SIM"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
@@ -110,7 +110,6 @@ class FShark(target: String,datawidth: Int = 16) extends CoreDevice {
   CircBuffer.io.deq.ready := memFifo.io.enq.ready
   memFifo.io.enq.valid := CircBuffer.io.deq.valid
   memFifo.io.enq.bits := CircBuffer.io.deq.bits
-  memFifo.io.readFrameLength := CircBuffer.io.readFrameLength
   // Connecting OCP and FIFO
   //------------------------
   memFifo.io.ocp.M := io.ocp.M

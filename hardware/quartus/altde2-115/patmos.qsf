@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP4CE115F29C7
 set_global_assignment -name TOP_LEVEL_ENTITY patmos_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "11.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:11:57  JUNE 19, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION "19.1.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "21.1.0 Lite Edition"
 
 
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
@@ -116,20 +116,20 @@ set_location_assignment PIN_M23 -to iKeysPins_key[0]
 #====================================================
 # Transmitter
 #====================================================
-#set_location_assignment PIN_AC15 -to oGpioPins[0]
-#set_location_assignment PIN_Y17 -to oGpioPins[1]
-#set_location_assignment PIN_Y16 -to oGpioPins[2]
-#set_location_assignment PIN_AE16 -to oGpioPins[3]
-#set_location_assignment PIN_AE15 -to oGpioPins[4]
-#set_location_assignment PIN_AF16 -to oGpioPins[5]
+set_location_assignment PIN_AC15 -to oGpioPins[0]
+set_location_assignment PIN_Y17 -to oGpioPins[1]
+set_location_assignment PIN_Y16 -to oGpioPins[2]
+set_location_assignment PIN_AE16 -to oGpioPins[3]
+set_location_assignment PIN_AE15 -to oGpioPins[4]
+set_location_assignment PIN_AF16 -to oGpioPins[5]
 # Reciever
 #====================================================
-#set_location_assignment PIN_AB22 -to oGpioPins[6]
-#set_location_assignment PIN_AB21 -to oGpioPins[7]
-#set_location_assignment PIN_AC21 -to oGpioPins[8]
-#set_location_assignment PIN_AD21 -to oGpioPins[9]
-#set_location_assignment PIN_AD15 -to oGpioPins[10]
-#set_location_assignment PIN_AC19 -to oGpioPins[11]
+set_location_assignment PIN_AB22 -to oGpioPins[6]
+set_location_assignment PIN_AB21 -to oGpioPins[7]
+set_location_assignment PIN_AC21 -to oGpioPins[8]
+set_location_assignment PIN_AD21 -to oGpioPins[9]
+set_location_assignment PIN_AD15 -to oGpioPins[10]
+set_location_assignment PIN_AC19 -to oGpioPins[11]
 
 # Ethernet Pin-out
 #=================================================

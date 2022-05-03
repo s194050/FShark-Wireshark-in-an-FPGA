@@ -10,11 +10,10 @@ import ocp._
 /**
   * FIFO IO with enqueue and dequeue ports using the ready/valid interface.
   */
-class FifoIO[T <: Data](private val gen: T, addrWidth: Int, dataWidth: Int) extends Bundle {
+class FifoIO[T <: Data](private val gen: T, val addrWidth: Int,val dataWidth: Int) extends Bundle {
   val enq = Flipped(new DecoupledIO(gen))
   //val deq = new DecoupledIO(gen)
   val ocp = new OcpCoreSlavePort(addrWidth,dataWidth)
-  val readFrameLength = Input(Bool())
 }
 
 /**
