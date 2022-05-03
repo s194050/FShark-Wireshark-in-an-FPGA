@@ -23,7 +23,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
       val addHeader = Output(Bool())
       val tdata = Output(UInt(datawidth.W))
     }))
-
+    val readFrameLength = Output(Bool())
     val deq = new DecoupledIO(UInt(datawidth.W))
   })
   print(actualDepth)
@@ -33,6 +33,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
   val bufferEmpty = WireInit(true.B)
   val bufferFullNext = WireInit(false.B)
   val bufferEmptyNext = WireInit(false.B)
+  io.readFrameLength := WireInit(false.B)
   io.filter_bus.ready := WireInit(false.B)
   io.deq.valid := WireInit(false.B)
   /*
@@ -66,6 +67,7 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
     io.deq.valid := true.B
     readFrom := true.B
     readValue := io.filter_bus.bits.tdata
+    io.readFrameLength := true.B
   }
   
 

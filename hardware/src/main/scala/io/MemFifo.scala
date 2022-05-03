@@ -21,7 +21,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
     }
     (cntReg, nextVal)
   }
-
+  val frameLengthCounter = RegInit(0.U(16.W))
   val mem = SyncReadMem(depth, gen)
 
   val incrRead = WireInit(false.B)
@@ -67,6 +67,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
           fullReg := false.B
           emptyReg := nextRead === writePtr
           incrRead := true.B
+          frameLengthCounter := frameLengthCounter + 1.U
         }.otherwise {
           stateReg := idle
         }
@@ -84,6 +85,7 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int) exte
           fullReg := false.B
           emptyReg := nextRead === writePtr
           incrRead := true.B
+          frameLengthCounter := frameLengthCounter + 1.U
         }.otherwise {
           stateReg := idle
         }
