@@ -4,7 +4,8 @@ import chisel3.util._
 import ocp._
 
 object FShark extends DeviceObject {
-  var target = "SIM"
+  // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
+  var target = "ALTERA"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
@@ -88,10 +89,10 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
 
 
 // Top file for MAC, filter and circular buffer
-class FShark(target: String = "SIM",datawidth: Int = 16) extends CoreDevice {
+class FShark(target: String,datawidth: Int = 16) extends CoreDevice {
   override val io = IO(new CoreDeviceIO() with FShark.Pins {})
   // Verilog Ethernet MAC blackbox
-  val ethmac1g = Module(new eth_mac_1gBB("SIM",16))
+  val ethmac1g = Module(new eth_mac_1gBB(target,16))
   //Filter for FMAC, input to the Circular buffer
   val FMAC_filter = Module(new FMAC_filter(datawidth))
   // Connecting MAC and filter
