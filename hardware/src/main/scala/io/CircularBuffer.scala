@@ -9,7 +9,7 @@ import patmos.Constants.{CLOCK_FREQ, UART_BAUD}
 import ocp._
 
 // Length = 1536
-class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
+class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
   val bitWidth = log2Ceil(depth)
   val actualDepth = math.pow(2,bitWidth).toInt// Calculate the actual depth, to confer with log2 logic
   val io = IO(new Bundle{
@@ -60,6 +60,8 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
 
   when(bufferEmpty){
     io.deq.valid := false.B
+  }.otherwise{
+    io.deq.valid := true.B
   }
 
 
@@ -69,8 +71,15 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
     readValue := io.filter_bus.bits.tdata
   }
 
+  when(counter === readValue && counter =/= 0.U) {
+    readFrom := false.B
+    counter := 0.U
+    readValue := 0.U
+  }
+
   when(bufferFull){
     io.filter_bus.ready := false.B
+    io.deq.valid := true.B
   }.otherwise{
     io.filter_bus.ready := true.B
   }
@@ -86,22 +95,13 @@ class CircularBuffer(depth: Int = 500, datawidth: Int = 16) extends Module() {
 
   when(io.deq.ready && !bufferEmpty){ // && io.filter_bus.bits.goodFrame When ocp is removed.
     when(readFrom){
-      when(counter === readValue && counter =/= 0.U) {
-        io.deq.valid := false.B
-        readFrom := false.B
-        counter := 0.U
-        readValue := 0.U
-      }.otherwise {
-        counter := counter + 1.U
-      }
-      io.deq.valid := true.B
-
       when(tail === actualDepth){
         tail  := 0.U
       }.otherwise{
         tail := tail + 1.U
       }
       bufferValue := data(tail)
+      counter := counter + 1.U
     }.otherwise{
       io.deq.valid := false.B
     }

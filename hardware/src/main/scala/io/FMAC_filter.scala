@@ -47,7 +47,6 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
   val bufferIdle :: bufferEvaluate:: bufferBadFrame :: bufferGoodFrame :: bufferFlushFrame :: bufferAddHeader :: Nil = Enum(6)
   val stateBuffer = RegInit(bufferIdle)
 
-when(io.filter_bus.ready) {
   switch(stateBuffer) {
     is(bufferIdle) {
       // Reset booleans
@@ -80,17 +79,18 @@ when(io.filter_bus.ready) {
     }
 
     is(bufferGoodFrame) {
-      // When the frame is good we can begin reading the frame in the buffer
-      io.filter_bus.valid := true.B
-      io.axis_tready := true.B
-      io.filter_bus.bits.goodFrame := true.B
-      io.filter_bus.bits.tdata := io.axis_tdata
+        // When the frame is good we can begin reading the frame in the buffer
+        io.filter_bus.valid := true.B
+        io.axis_tready := true.B
+        io.filter_bus.bits.goodFrame := true.B
 
-      when(io.axis_tlast) {
-        cntFrame := cntFrame // Set the counter to the current value at next rising edge
-        io.axis_tready := false.B // Stop recieving from the MAC FIFO
-        stateBuffer := bufferAddHeader
-      }
+        io.filter_bus.bits.tdata := io.axis_tdata
+
+        when(io.axis_tlast) {
+          cntFrame := cntFrame // Set the counter to the current value at next rising edge
+          io.axis_tready := false.B // Stop recieving from the MAC FIFO
+          stateBuffer := bufferAddHeader
+        }
     }
 
     is(bufferAddHeader) {
@@ -135,5 +135,4 @@ when(io.filter_bus.ready) {
       stateBuffer := bufferIdle
     }
   }
-}
 }

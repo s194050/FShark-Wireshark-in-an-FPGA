@@ -20,15 +20,15 @@ int main(){
 	volatile _SPM int *uart_data = (volatile _SPM int *) 0xF0080004;
 	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00b0000;
 	int packet;
-	int frameLength;
+	int frameLength = 0;
 	char str[5];
 	
 
 	for (;;) {
-		frameLength = *io_ptr;
-		printf("Printing a frame of length: %d\n", frameLength);
+		//frameLength = *io_ptr;
+		//printf("Printing a frame of length: %d\n", frameLength);
 
-		for(int i = 0; i <= frameLength; i++){
+		//for(int i = 0; i <= frameLength; i++){
 			packet = *io_ptr;
 
 			tohex(packet,str);
@@ -42,6 +42,6 @@ int main(){
 			while ((*uart_status & 0x01) == 0) {
 			;
 			}
-		}
+		//}
 	}
 }
