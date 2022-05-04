@@ -89,10 +89,12 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
 
 
 // Top file for MAC, filter and circular buffer
-class FShark(target: String,datawidth: Int = 16) extends CoreDevice {
+class FShark(target: String,datawidth: Int) extends CoreDevice {
   override val io = IO(new CoreDeviceIO() with FShark.Pins {})
+  // Initiate OCP interface variables
+  val stopFrameRecording = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
-  val ethmac1g = Module(new eth_mac_1gBB(target,16))
+  val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
   //Filter for FMAC, input to the Circular buffer
   val FMAC_filter = Module(new FMAC_filter(datawidth))
   // Connecting MAC and filter
@@ -103,13 +105,15 @@ class FShark(target: String,datawidth: Int = 16) extends CoreDevice {
   FMAC_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
   FMAC_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
-  val CircBuffer = Module(new CircularBuffer(20,datawidth))
-  val memFifo = Module(new MemFifo(UInt(datawidth.W),20,io.ocp.addrWidth,io.ocp.dataWidth))
+  val CircBuffer = Module(new CircularBuffer(200,datawidth))
+  val memFifo = Module(new MemFifo(UInt(datawidth.W),300,io.ocp.addrWidth,io.ocp.dataWidth,datawidth))
   // Connecting buffer and FIFO
   //---------------------------
+  memFifo.io.endOfFrame := CircBuffer.io.endOfFrame
   CircBuffer.io.deq.ready := memFifo.io.enq.ready
   memFifo.io.enq.valid := CircBuffer.io.deq.valid
   memFifo.io.enq.bits := CircBuffer.io.deq.bits
+  memFifo.io.stopFrameRecording := stopFrameRecording
   // Connecting OCP and FIFO
   //------------------------
   memFifo.io.ocp.M := io.ocp.M
@@ -159,8 +163,15 @@ class FShark(target: String,datawidth: Int = 16) extends CoreDevice {
 
   when(io.ocp.M.Cmd === OcpCmd.WR) {
     respReg := OcpResp.DVA
-    tx_axis_tvalid_Reg := true.B
-    dataWriter := io.ocp.M.Data
+    switch(io.ocp.M.Addr(4, 2)) {
+      is(0.U) {
+        stopFrameRecording := true.B
+      }
+      is(1.U) {
+        tx_axis_tvalid_Reg := true.B
+        dataWriter := io.ocp.M.Data
+      }
+    }
   }
-
+  io.ocp.S.Resp := respReg
 }

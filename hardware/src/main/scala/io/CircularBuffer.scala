@@ -9,7 +9,7 @@ import patmos.Constants.{CLOCK_FREQ, UART_BAUD}
 import ocp._
 
 // Length = 1536
-class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
+class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   val bitWidth = log2Ceil(depth)
   val actualDepth = math.pow(2,bitWidth).toInt// Calculate the actual depth, to confer with log2 logic
   val io = IO(new Bundle{
@@ -24,6 +24,7 @@ class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
       val tdata = Output(UInt(datawidth.W))
     }))
     val deq = new DecoupledIO(UInt(datawidth.W))
+    val endOfFrame = Output(Bool())
   })
   print(actualDepth)
   //Initialize signals
@@ -32,9 +33,10 @@ class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
   val bufferEmpty = WireInit(true.B)
   val bufferFullNext = WireInit(false.B)
   val bufferEmptyNext = WireInit(false.B)
-  val readFrameLength = WireInit(false.B) // To create a one clock cycle delay
   io.filter_bus.ready := WireInit(false.B)
   io.deq.valid := WireInit(false.B)
+  io.deq.bits := WireInit(0.U(datawidth.W))
+  io.endOfFrame := WireInit(false.B)
   /*
   IO's  to push and pop and get status
   */
@@ -60,26 +62,21 @@ class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
 
   when(bufferEmpty){
     io.deq.valid := false.B
-  }.otherwise{
-    io.deq.valid := true.B
   }
 
 
-  when(io.filter_bus.bits.addHeader && io.deq.ready){
-    io.deq.valid := false.B
+  when(io.filter_bus.bits.addHeader){
+    io.endOfFrame := true.B
     readFrom := true.B
     readValue := io.filter_bus.bits.tdata
   }
 
-  when(counter === readValue && counter =/= 0.U) {
-    readFrom := false.B
-    counter := 0.U
-    readValue := 0.U
-  }
+
+
+
 
   when(bufferFull){
     io.filter_bus.ready := false.B
-    io.deq.valid := true.B
   }.otherwise{
     io.filter_bus.ready := true.B
   }
@@ -93,18 +90,22 @@ class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
     data(Address) := io.filter_bus.bits.tdata
   }
 
-  when(io.deq.ready && !bufferEmpty){ // && io.filter_bus.bits.goodFrame When ocp is removed.
-    when(readFrom){
-      when(tail === actualDepth){
-        tail  := 0.U
-      }.otherwise{
-        tail := tail + 1.U
-      }
-      bufferValue := data(tail)
-      counter := counter + 1.U
+  when(io.deq.ready && !bufferEmpty && readFrom){ // && io.filter_bus.bits.goodFrame When ocp is removed.
+  when(tail === actualDepth){
+      tail  := 0.U
     }.otherwise{
-      io.deq.valid := false.B
+      tail := tail + 1.U
     }
+    bufferValue := data(tail)
+
+    when(counter === (readValue + 1.U) && readValue =/= 0.U){
+      readFrom := false.B
+      counter := 0.U
+      readValue := 0.U
+    }.otherwise {
+      counter := counter + 1.U
+    }
+
   }
 
   when(io.filter_bus.bits.flushFrame){
@@ -136,6 +137,8 @@ class CircularBuffer(depth: Int = 20, datawidth: Int = 16) extends Module() {
   }.otherwise {
     io.bufferLength := (difference)
   }
-
-  io.deq.bits := bufferValue
+  when(io.deq.ready && readFrom) {
+    io.deq.valid := true.B
+    io.deq.bits := bufferValue
+  }
 }

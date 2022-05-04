@@ -24,11 +24,14 @@ int main(){
 	char str[5];
 	
 
-	for (;;) {
-		//frameLength = *io_ptr;
-		//printf("Printing a frame of length: %d\n", frameLength);
 
-		//for(int i = 0; i <= frameLength; i++){
+	*io_ptr = 1;
+	
+	for (;;) {
+		frameLength = *io_ptr;
+		printf("Printing a frame of length: %d\n", frameLength);
+
+		for(int i = 0; i <= frameLength; i++){
 			packet = *io_ptr;
 
 			tohex(packet,str);
@@ -42,6 +45,6 @@ int main(){
 			while ((*uart_status & 0x01) == 0) {
 			;
 			}
-		//}
+		}
 	}
 }
