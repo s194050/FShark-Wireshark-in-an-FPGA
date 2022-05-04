@@ -66,9 +66,6 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int, inpu
         writeToFIFO := false.B
         when(frameLength === 0.U){ // Read length of frame
           frameLength := data
-          fullReg := false.B
-          emptyReg := nextRead === writePtr
-          incrRead := true.B
         }
         stateReg := fill_empty
       }
@@ -94,8 +91,10 @@ class MemFifo[T <: Data](gen: T, depth: Int,addrWidth: Int, dataWidth: Int, inpu
       }
       when(frameLength === 0.U && io.stopFrameRecording) { // If trigger, go to read from FIFO
         stateReg := waitForEOF
+        frameLength := 0.U
       }.elsewhen(frameLength === 0.U){ // Otherwise go back and check if FIFO is full
         stateReg := fill
+        frameLength := 0.U
       }
     }
 
