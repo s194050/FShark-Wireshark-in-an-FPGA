@@ -21,6 +21,9 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
       val addHeader = Output(Bool())
       val tdata = Output(UInt((datawidth).W))
     })
+
+    val filterIndex = Input(UInt(datawidth.W))
+    val filterValue = Input(UInt((datawidth/2).W))
   })
   // Initialize counter register
   val cntFrame = RegInit(0.U(datawidth.W))

@@ -91,6 +91,7 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
 // Top file for MAC, filter and circular buffer
 class FShark(target: String,datawidth: Int) extends CoreDevice {
   override val io = IO(new CoreDeviceIO() with FShark.Pins {})
+  // Initiate FIFO reader
   val endOfFrame = WireInit(false.B)
   val fullFIFO = RegInit(false.B)
   val frameLength = RegInit(0.U(datawidth.W))
@@ -98,6 +99,8 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val readHolder = RegInit(false.B)
   // Initiate OCP interface variables
   val stopFrameRecording = RegInit(false.B)
+  val filterIndex = RegInit(0.U(datawidth.W))
+  val filterValue = RegInit(0.U((datawidth/2).W)) // Only check a byte 16/2 = 8 bit = 1 byte
   // Verilog Ethernet MAC blackbox
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
   //Filter for FMAC, input to the Circular buffer
@@ -236,18 +239,23 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
 
   // Mux to hold the read pulse, until a valid response is sent back to OCP
   sendToPatmos := Mux(((io.ocp.M.Cmd === OcpCmd.RD) || (respReg === OcpResp.DVA)), io.ocp.M.Cmd === OcpCmd.RD, readHolder)
-
-
+  
   // OCP write to define specific variables in the filter, as well as setting the trigger
   when(io.ocp.M.Cmd === OcpCmd.WR) {
     respReg := OcpResp.DVA
     switch(io.ocp.M.Addr(4, 2)) {
-      is(0.U) {
+      is(0.U) { // Assign trigger to true
         stopFrameRecording := true.B
       }
-      is(1.U) {
+      is(1.U) { // For writing to the MAC
         tx_axis_tvalid_Reg := true.B
         dataWriter := io.ocp.M.Data
+      }
+      is(2.U){ // Assign the input value to filter index
+        filterIndex := io.ocp.M.Data
+      }
+      is(3.U){ // Which value to filter through, if not this value the frame is discarded
+        filterValue := io.ocp.M.Data
       }
     }
   }

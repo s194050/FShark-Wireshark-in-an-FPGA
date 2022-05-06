@@ -19,6 +19,7 @@ int main(){
 	volatile _SPM int *uart_status = (volatile _SPM int *) 0xF0080000;
 	volatile _SPM int *uart_data = (volatile _SPM int *) 0xF0080004;
 	volatile _IODEV int *io_ptr = (volatile _IODEV int *) 0xF00b0000;
+	volatile _IODEV int *filter_index = (volatile _IODEV int *) 0xF00b0000;
 	int packet;
 	int frameLength = 0;
 	char str[5];
@@ -30,7 +31,7 @@ int main(){
 	for (;;) {
 		
 		frameLength = *io_ptr;
-		printf("Printing a frame of length: %d\n", frameLength);
+		printf("Printing a frame of length: %d\n", frameLength*2);
 	
 		for(int i = 0; i <= frameLength; i++){
 			packet = *io_ptr;
