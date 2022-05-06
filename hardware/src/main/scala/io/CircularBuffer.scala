@@ -18,13 +18,12 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
 
     val filter_bus = Flipped(Decoupled(new Bundle {
       val flushFrame = Output(Bool())
-      val goodFrame = Output(Bool())
-      val badFrame = Output(Bool())
       val addHeader = Output(Bool())
       val tdata = Output(UInt(datawidth.W))
     }))
     val deq = new DecoupledIO(UInt(datawidth.W))
     val endOfFrame = Output(Bool())
+    val frameRecieving = Output(Bool())
   })
   print(actualDepth)
   //Initialize signals
@@ -46,6 +45,8 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   val bufferValue = WireInit(0.U(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
   val counter = RegInit(0.U(bitWidth.W))
+  // Boolean to handle whether a frame is being received
+  io.frameRecieving := RegInit(false.B)
 
   // For handling flushing of a bad frame
    val temp = Mux(io.filter_bus.bits.flushFrame,head-(io.filter_bus.bits.tdata + 1.U) , head)
@@ -60,28 +61,27 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   bufferFull := io.bufferLength >= actualDepth - 1.U
   bufferFullNext := io.bufferLength >= actualDepth - 2.U
 
-  when(bufferEmpty){
+  when(bufferEmpty){ // Dont read from buffer if empty
     io.deq.valid := false.B
+    readFrom := false.B
   }
 
 
-  when(io.filter_bus.bits.addHeader){
+  when(io.filter_bus.bits.addHeader){ // Signals End of frame, as such move back to place the header value
     io.endOfFrame := true.B
     readFrom := true.B
     readValue := io.filter_bus.bits.tdata
+    io.frameRecieving := false.B
   }
 
 
-
-
-
-  when(bufferFull){
+  when(bufferFull){ // Stop writing to buffer if full
     io.filter_bus.ready := false.B
   }.otherwise{
     io.filter_bus.ready := true.B
   }
 
-  when(io.filter_bus.valid && !bufferFull){
+  when(io.filter_bus.valid && !bufferFull){ // Write to the buffer when frame is okay
     when(head === actualDepth){
       head := 1.U
     }.otherwise{
@@ -98,17 +98,19 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     }
     bufferValue := data(tail)
 
-    when(counter === (readValue + 1.U) && readValue =/= 0.U){
-      readFrom := false.B
+    when(counter === (readValue + 1.U) && readValue =/= 0.U){ // Count until frame + header
+      readFrom := false.B // Reset values
       counter := 0.U
       readValue := 0.U
+      io.frameRecieving := RegNext(false.B) // Set low when not recieving frame
     }.otherwise {
       counter := counter + 1.U
+      io.frameRecieving := true.B
     }
 
   }
 
-  when(io.filter_bus.bits.flushFrame){
+  when(io.filter_bus.bits.flushFrame){ // Flush the frame by moving header back
     io.deq.valid := false.B
     head := temp
   }
@@ -137,7 +139,8 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   }.otherwise {
     io.bufferLength := (difference)
   }
-  when(io.deq.ready && readFrom) {
+
+  when(io.deq.ready && readFrom) {  // Output to FIFO if a good frame is in buffer
     io.deq.valid := true.B
     io.deq.bits := bufferValue
   }

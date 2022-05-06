@@ -18,8 +18,6 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
     // Bus for connecting filter and buffer
     val filter_bus = Decoupled(new Bundle{
       val flushFrame = Output(Bool())
-      val badFrame = Output(Bool())
-      val goodFrame = Output(Bool())
       val addHeader = Output(Bool())
       val tdata = Output(UInt((datawidth).W))
     })
@@ -30,8 +28,6 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
   io.axis_tready := WireInit(false.B)
   io.filter_bus.valid := WireInit(false.B)
   io.filter_bus.bits.flushFrame := WireInit(false.B)
-  io.filter_bus.bits.goodFrame := WireInit(false.B)
-  io.filter_bus.bits.badFrame := WireInit(false.B)
   io.filter_bus.bits.addHeader := WireInit(false.B)
   io.filter_bus.bits.tdata := WireInit(0.U(datawidth.W))
 
@@ -47,14 +43,12 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
   val bufferIdle :: bufferEvaluate:: bufferBadFrame :: bufferGoodFrame :: bufferFlushFrame :: bufferAddHeader :: Nil = Enum(6)
   val stateBuffer = RegInit(bufferIdle)
 
-when(io.filter_bus.ready) {
+when(io.filter_bus.ready) { // Only give data to buffer if it is not full
   switch(stateBuffer) {
     is(bufferIdle) {
       // Reset booleans
       io.filter_bus.valid := false.B
-      io.filter_bus.bits.badFrame := false.B
       io.filter_bus.bits.flushFrame := false.B
-      io.filter_bus.bits.goodFrame := false.B
       io.filter_bus.bits.addHeader := false.B
       io.axis_tready := false.B
       cntFrame := 0.U
@@ -83,7 +77,6 @@ when(io.filter_bus.ready) {
       // When the frame is good we can begin reading the frame in the buffer
       io.filter_bus.valid := true.B
       io.axis_tready := true.B
-      io.filter_bus.bits.goodFrame := true.B
 
       io.filter_bus.bits.tdata := io.axis_tdata
 
@@ -98,7 +91,6 @@ when(io.filter_bus.ready) {
       // Add header which is the length of the frame for usage in the buffer
       io.axis_tready := true.B
       io.filter_bus.valid := true.B
-      io.filter_bus.bits.goodFrame := true.B
       io.filter_bus.bits.addHeader := true.B
       io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1 // Divide by two and round up
 
@@ -113,8 +105,6 @@ when(io.filter_bus.ready) {
       cntFrame := cntFrame // Set the counter constant, as we have stopped sending the frame to the buffer
       io.axis_tready := true.B
       io.filter_bus.valid := false.B
-      io.filter_bus.bits.goodFrame := false.B
-      io.filter_bus.bits.badFrame := true.B // Not necessary but is done for debugging
 
       when(io.axis_tlast) { // Receive data from MAC until tlast is high
         cntFrame := cntFrame // Set the counter to the current value at next rising edge
@@ -129,9 +119,8 @@ when(io.filter_bus.ready) {
       io.axis_tready := true.B
       io.filter_bus.valid := true.B
       io.filter_bus.bits.flushFrame := true.B
-      io.filter_bus.bits.goodFrame := false.B
-      io.filter_bus.bits.badFrame := true.B
-      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1
+
+      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1 // Divide by two, as we receive 16 bits
 
       stateBuffer := bufferIdle
     }

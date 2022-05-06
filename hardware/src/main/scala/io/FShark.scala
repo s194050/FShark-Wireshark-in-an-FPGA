@@ -91,6 +91,11 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
 // Top file for MAC, filter and circular buffer
 class FShark(target: String,datawidth: Int) extends CoreDevice {
   override val io = IO(new CoreDeviceIO() with FShark.Pins {})
+  val endOfFrame = WireInit(false.B)
+  val fullFIFO = RegInit(false.B)
+  val frameLength = RegInit(0.U(datawidth.W))
+  val sendToPatmos = WireInit(false.B)
+  val readHolder = RegInit(false.B)
   // Initiate OCP interface variables
   val stopFrameRecording = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
@@ -106,24 +111,20 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   FMAC_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
   val CircBuffer = Module(new CircularBuffer(200,datawidth))
-  val memFifo = Module(new MemFifo(UInt(datawidth.W),300,io.ocp.addrWidth,io.ocp.dataWidth,datawidth))
+  val memFifo = Module(new MemFifo(UInt(datawidth.W),300))
   // Connecting buffer and FIFO
   //---------------------------
-  memFifo.io.endOfFrame := CircBuffer.io.endOfFrame
+  endOfFrame := CircBuffer.io.endOfFrame
+  fullFIFO := !memFifo.io.enq.ready
   CircBuffer.io.deq.ready := memFifo.io.enq.ready
   memFifo.io.enq.valid := CircBuffer.io.deq.valid
   memFifo.io.enq.bits := CircBuffer.io.deq.bits
-  memFifo.io.stopFrameRecording := stopFrameRecording
-  // Connecting OCP and FIFO
-  //------------------------
-  memFifo.io.ocp.M := io.ocp.M
-  io.ocp.S := memFifo.io.ocp.S
+  memFifo.io.deq.ready := RegInit(false.B)
+
   // Connecting buffer and filter
   //-----------------------------
   CircBuffer.io.filter_bus.bits.flushFrame := FMAC_filter.io.filter_bus.bits.flushFrame
   CircBuffer.io.filter_bus.bits.addHeader := FMAC_filter.io.filter_bus.bits.addHeader
-  CircBuffer.io.filter_bus.bits.goodFrame := FMAC_filter.io.filter_bus.bits.goodFrame
-  CircBuffer.io.filter_bus.bits.badFrame := FMAC_filter.io.filter_bus.bits.badFrame
   CircBuffer.io.filter_bus.bits.tdata := FMAC_filter.io.filter_bus.bits.tdata
   CircBuffer.io.filter_bus.valid := FMAC_filter.io.filter_bus.valid
   FMAC_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
@@ -161,6 +162,83 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   ethmac1g.io.tx_axis_tlast := dataWriter(30)
   ethmac1g.io.tx_axis_tdata := dataWriter(7,0)
 
+
+  //FIFO handling:
+  //--------------
+  val idle :: fill :: fill_empty :: waitForEOF :: emptyToPatmos :: Nil = Enum(5)
+  val stateReg = RegInit(idle)
+
+  switch(stateReg) {
+    is(idle) { // Idle state
+      when(endOfFrame) { // When the first EOF occurs go to fill the FIFO
+        stateReg := fill
+      }
+    }
+
+    is(fill) { // Keep filling the FIFO with frame data until trigger or the FIFO is full
+
+      when(stopFrameRecording) { // Trigger, that determines that the current data is to be sent along
+        stateReg := waitForEOF
+      }
+      when(fullFIFO) { // When the FIFO is full, empty some of the first elements to avoid stall
+        when(frameLength === 0.U) { // Read length of frame
+          frameLength := memFifo.io.deq.bits + 1.U
+        }
+        stateReg := fill_empty
+      }
+    }
+
+    is(fill_empty) { // Keep filling and dumping frames, to avoid stall due to lack of space
+      when(frameLength =/= 0.U) {
+        frameLength := frameLength - 1.U
+      }
+      // Keep dumping frame
+      when(memFifo.io.deq.valid){
+          memFifo.io.deq.ready := true.B
+      }
+      when(frameLength === 0.U && stopFrameRecording) { // If trigger, go to read from FIFO
+        stateReg := waitForEOF
+        frameLength := 0.U
+      }.elsewhen(frameLength === 0.U) { // Otherwise go back and check if FIFO is full
+        stateReg := fill
+        frameLength := 0.U
+      }
+    }
+
+    is(waitForEOF) { // Wait for the current frame to be filled
+      memFifo.io.deq.ready := false.B // Write to the FIFO if frame is not done
+
+      when(endOfFrame) { // When the end of the frame is met, go to empty
+        stateReg := emptyToPatmos
+      }.elsewhen(!CircBuffer.io.frameRecieving && !CircBuffer.io.deq.valid){ // When data input stops, allow emptying
+        stateReg := emptyToPatmos
+      }
+    }
+
+    is(emptyToPatmos) { // Read from FIFO to Patmos
+      when(sendToPatmos) { // When OCP.RD
+        when(memFifo.io.deq.valid) { // When FIFO is ready to output
+          respReg := OcpResp.DVA // Response to OCP to signal data is sent
+          memFifo.io.deq.ready := true.B
+        }.otherwise {
+          stateReg := idle
+          stopFrameRecording := false.B
+          sendToPatmos := false.B
+        }
+      }
+    }
+  }
+
+  // Statement to act as enable for register, to keep read value
+  when(respReg === OcpResp.DVA || (io.ocp.M.Cmd === OcpCmd.RD)){
+    readHolder := (io.ocp.M.Cmd === OcpCmd.RD)
+  }
+
+  // Mux to hold the read pulse, until at valid response is sent back to OCP
+  sendToPatmos := Mux(((io.ocp.M.Cmd === OcpCmd.RD) || (respReg === OcpResp.DVA)), io.ocp.M.Cmd === OcpCmd.RD, readHolder)
+
+
+  // OCP write to define specific variables in the filter, as well as setting the trigger
   when(io.ocp.M.Cmd === OcpCmd.WR) {
     respReg := OcpResp.DVA
     switch(io.ocp.M.Addr(4, 2)) {
@@ -173,5 +251,8 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
       }
     }
   }
+
+  // Connections to master
   io.ocp.S.Resp := respReg
+  io.ocp.S.Data := RegNext(memFifo.io.deq.bits)
 }
