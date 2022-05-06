@@ -229,12 +229,12 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
     }
   }
 
-  // Statement to act as enable for register, to keep read value
+  // Statement to act as enable for register, to keep read value high for multiple clocks
   when(respReg === OcpResp.DVA || (io.ocp.M.Cmd === OcpCmd.RD)){
     readHolder := (io.ocp.M.Cmd === OcpCmd.RD)
   }
 
-  // Mux to hold the read pulse, until at valid response is sent back to OCP
+  // Mux to hold the read pulse, until a valid response is sent back to OCP
   sendToPatmos := Mux(((io.ocp.M.Cmd === OcpCmd.RD) || (respReg === OcpResp.DVA)), io.ocp.M.Cmd === OcpCmd.RD, readHolder)
 
 
