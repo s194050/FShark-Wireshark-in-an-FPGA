@@ -36,7 +36,7 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
 
   // Counter
   when(io.axis_tvalid) {
-    when(io.axis_tkeep === 0.U){ // Increment by one, when byte uneven.S
+    when(io.axis_tkeep =/= 3.U){ // Increment by one, when byte uneven.S
       cntFrame := cntFrame + 1.U
     }
     cntFrame := cntFrame + 2.U // Increment by two as bus width is 16 bit = 2 bytes

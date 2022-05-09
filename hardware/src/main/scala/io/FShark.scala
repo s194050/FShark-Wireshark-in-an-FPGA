@@ -239,7 +239,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
 
   // Mux to hold the read pulse, until a valid response is sent back to OCP
   sendToPatmos := Mux(((io.ocp.M.Cmd === OcpCmd.RD) || (respReg === OcpResp.DVA)), io.ocp.M.Cmd === OcpCmd.RD, readHolder)
-  
+
   // OCP write to define specific variables in the filter, as well as setting the trigger
   when(io.ocp.M.Cmd === OcpCmd.WR) {
     respReg := OcpResp.DVA
