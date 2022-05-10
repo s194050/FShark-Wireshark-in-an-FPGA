@@ -86,6 +86,6 @@ class MemFifo[T <: Data](gen: T, depth: Int) extends Fifo(gen: T, depth: Int) {
   }
 
   io.deq.bits := Mux(stateReg === valid, data, shadowReg)
-  io.enq.ready := !fullReg
+  io.enq.ready := !fullReg && io.writeToFIFO
   io.deq.valid := stateReg === valid || stateReg === full
 }

@@ -97,21 +97,23 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val frameLength = RegInit(0.U(datawidth.W))
   val sendToPatmos = WireInit(false.B)
   val readHolder = RegInit(false.B)
+  val writeToFIFO = RegInit(true.B)
   // Initiate OCP interface variables
   val stopFrameRecording = RegInit(false.B)
-  val filterIndex = RegInit(0.U(datawidth.W))
+  val filterIndex = RegInit(0.U((datawidth/2).W))
   val filterValue = RegInit(0.U((datawidth/2).W)) // Only check a byte 16/2 = 8 bit = 1 byte
+  val filterSet = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
   //Filter for FMAC, input to the Circular buffer
-  val FMAC_filter = Module(new FMAC_filter(datawidth))
+  val FShark_filter = Module(new FShark_filter(datawidth))
   // Connecting MAC and filter
   //--------------------------
-  ethmac1g.io.rx_axis_tready := FMAC_filter.io.axis_tready
-  FMAC_filter.io.axis_tvalid := ethmac1g.io.rx_axis_tvalid
-  FMAC_filter.io.axis_tkeep := ethmac1g.io.rx_axis_tkeep
-  FMAC_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
-  FMAC_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
+  ethmac1g.io.rx_axis_tready := FShark_filter.io.axis_tready
+  FShark_filter.io.axis_tvalid := ethmac1g.io.rx_axis_tvalid
+  FShark_filter.io.axis_tkeep := ethmac1g.io.rx_axis_tkeep
+  FShark_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
+  FShark_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
   val CircBuffer = Module(new CircularBuffer(200,datawidth))
   val memFifo = Module(new MemFifo(UInt(datawidth.W),300))
@@ -123,14 +125,20 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   memFifo.io.enq.valid := CircBuffer.io.deq.valid
   memFifo.io.enq.bits := CircBuffer.io.deq.bits
   memFifo.io.deq.ready := RegInit(false.B)
-
+  memFifo.io.writeToFIFO := writeToFIFO
   // Connecting buffer and filter
   //-----------------------------
-  CircBuffer.io.filter_bus.bits.flushFrame := FMAC_filter.io.filter_bus.bits.flushFrame
-  CircBuffer.io.filter_bus.bits.addHeader := FMAC_filter.io.filter_bus.bits.addHeader
-  CircBuffer.io.filter_bus.bits.tdata := FMAC_filter.io.filter_bus.bits.tdata
-  CircBuffer.io.filter_bus.valid := FMAC_filter.io.filter_bus.valid
-  FMAC_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
+  CircBuffer.io.filter_bus.bits.flushFrame := FShark_filter.io.filter_bus.bits.flushFrame
+  CircBuffer.io.filter_bus.bits.addHeader := FShark_filter.io.filter_bus.bits.addHeader
+  CircBuffer.io.filter_bus.bits.tdata := FShark_filter.io.filter_bus.bits.tdata
+  CircBuffer.io.filter_bus.valid := FShark_filter.io.filter_bus.valid
+  FShark_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
+
+  // Connecting filter and FShark
+  //-----------------------------
+  FShark_filter.io.filterIndex := filterIndex
+  FShark_filter.io.filterValue := filterValue
+  FShark_filter.io.filterSet := filterSet
   //----------------------------------
   // Connect the pins straight through
   // Clock and logic
@@ -185,7 +193,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
       }
       when(fullFIFO) { // When the FIFO is full, empty some of the first elements to avoid stall
         when(frameLength === 0.U) { // Read length of frame
-          frameLength := memFifo.io.deq.bits + 1.U
+          frameLength := ((memFifo.io.deq.bits + 1.U) >> 1) + 1.U
         }
         stateReg := fill_empty
       }
@@ -219,6 +227,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
     }
 
     is(emptyToPatmos) { // Read from FIFO to Patmos
+      writeToFIFO := false.B
       when(sendToPatmos) { // When OCP.RD
         when(memFifo.io.deq.valid) { // When FIFO is ready to output
           respReg := OcpResp.DVA // Response to OCP to signal data is sent
@@ -227,6 +236,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
           stateReg := idle
           stopFrameRecording := false.B
           sendToPatmos := false.B
+          writeToFIFO := true.B
         }
       }
     }
@@ -252,10 +262,12 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
         dataWriter := io.ocp.M.Data
       }
       is(2.U){ // Assign the input value to filter index
-        filterIndex := io.ocp.M.Data
+        filterIndex := io.ocp.M.Data(7,0)
+        filterSet := false.B
       }
       is(3.U){ // Which value to filter through, if not this value the frame is discarded
-        filterValue := io.ocp.M.Data
+        filterValue := io.ocp.M.Data(7,0)
+        filterSet := true.B // Do not process any values until filter is set.
       }
     }
   }

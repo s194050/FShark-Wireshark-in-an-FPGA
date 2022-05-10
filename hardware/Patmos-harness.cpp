@@ -378,7 +378,7 @@ public:
 
   // Add read file functionallity of frames, and include CRC calculations aswell.
   void emu_RGMII(int RGMII_in,int RGMII_out,int edge) {
-    static int counter = -200;
+    static int counter = -20000; //180000
     static int dataCnt = 0;
     int en = 0;
     const int preamble[8] = {0x55,0x55,0x55,0x55,0x55,0x55,0x55,0xD5};
@@ -391,74 +391,95 @@ public:
     static unsigned char space = 0;
     static int Crc32 = 0;
     static int Crc32old = 0;
-
+    static bool firstRun = true;
+    static bool endOfFrame = false;
+    static int v = 0;
+    
 
 
     if(RGMII_manual){ // For now manual file input, requires only the frame with space seperation
-      if(counter < 0){ // Delay start of RGMII interface simulation
-        if(!edge){
-          counter++;
-        }
-      }else if(counter <= 7){ // Send the preamble constant for all Ethernet Type II frames
-        en = 1; // set high for all of frame transmission
-        byteout = preamble[counter];
-        if(!edge){
-          counter++; // Increment counter
-        }
-      }else if(counter <= 8){
-        en = 1; // set high for all of frame transmission
+      if(!endOfFrame){
 
-        if(!readStatus){
-          int r = read(RGMII_in, &highNibble,1); // Read one nibble from frame file
-          int h = read(RGMII_in, &lowNibble,1);
-          int v = read(RGMII_in, &space,1);
-          readStatus = true;
-        }else{ // Only read once each clock
-          readStatus = false;
-        }
-
-        byteout = hex2byte(highNibble,lowNibble); // Combine the two nibbles to a byte and send it
-        //cout << "Byteout: " << int(byteout) << " High: " << int(highNibble) << " Low: " << int(lowNibble) << endl;
-
-        //cout << "High: " << int(highNibble) << "Low: " << int(lowNibble) << "Space: " << int(space) << endl;
-
-        if(!edge){
-          Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old); // Calculate Crc32
-          Crc32old = Crc32; // Save the current value, for use next calculation
-
-          if(space == '\n'){ // New line indicates end of frame, go to add of Crc32
-            counter = 9;
-            highNibble = 0;
-            lowNibble = 0;
-            space = 0;
-            readStatus = false;
-            //cout << "CrcValue:" << int(Crc32) << endl;
-          }
-        }
-      }else if(counter < 13){ // Send the checksum
-        en = 1;
-        byteout = Crc32 & 0xFF; // Send one byte
-        if(!edge){
-          Crc32 = Crc32 >> 8; // Shift by 8 to get rest of the bytes contained in the int
-          counter++; // Increment counter
-        }
-      }else{
-        Crc32 = 0;
-        Crc32old = 0;
-        en = 0; // Enable is low for all of IFG transmission
-        byteout = 0x00; // IFG zeroing
-        if(counter >= (13+12)){
-          counter = 0; // Reset counter frame is sent
-        }else{
+        if(counter < 0){ // Delay start of RGMII interface simulation
           if(!edge){
-            counter++; // Increment counter for IFG
+            counter++;
+          }
+        }else if(counter <= 7){ // Send the preamble constant for all Ethernet Type II frames
+          en = 1; // set high for all of frame transmission
+          byteout = preamble[counter];
+          if(!edge){
+            counter++; // Increment counter
+          }
+        }else if(counter <= 8){
+          en = 1; // set high for all of frame transmission
+
+          if(!readStatus){
+            int r = read(RGMII_in, &highNibble,1); // Read one nibble from frame file
+            int h = read(RGMII_in, &lowNibble,1);
+            v = read(RGMII_in, &space,1);
+            readStatus = true;
+          }else{ // Only read once each clock
+            readStatus = false;
+          }
+
+          byteout = hex2byte(highNibble,lowNibble); // Combine the two nibbles to a byte and send it
+          //cout << "Byteout: " << int(byteout) << " High: " << int(highNibble) << " Low: " << int(lowNibble) << endl;
+
+          //cout << "High: " << int(highNibble) << "Low: " << int(lowNibble) << "Space: " << int(space) << endl;
+
+          if(!edge){
+            Crc32 = crc32_1byte_tableless(&byteout,1,Crc32old); // Calculate Crc32
+            Crc32old = Crc32; // Save the current value, for use next calculation
+            if(v == 0){
+              readStatus = false;
+              highNibble = 0;
+              lowNibble = 0;
+              space = 0;
+              counter = 9;
+            }
+            if(space == '\n'){ // New line indicates end of frame, go to add of Crc32
+              firstRun = false;
+              readStatus = false;
+              highNibble = 0;
+              lowNibble = 0;
+              space = 0;
+              counter = 9;
+              //cout << "CrcValue:" << int(Crc32) << endl;
+            }          
+          }
+          
+        }else if(counter < 13){ // Send the checksum
+          en = 1;
+          byteout = Crc32 & 0xFF; // Send one byte
+          if(!edge){
+            Crc32 = Crc32 >> 8; // Shift by 8 to get rest of the bytes contained in the int
+            counter++; // Increment counter
+          }
+        }else{
+          Crc32 = 0;
+          Crc32old = 0;
+          en = 0; // Enable is low for all of IFG transmission
+          byteout = 0x00; // IFG zeroing
+          if(counter >= (13+12)){
+            counter = 0; // Reset counter frame is sent
+            if(v == 0){ // Check for EOF
+              endOfFrame = true;
+            }
+          }else{
+            if(!edge){
+              counter++; // Increment counter for IFG
+            }
           }
         }
-      }
-      c -> io_FShark_rgmii_rx_clk = !edge;
-      c -> io_FShark_rgmii_rx_ctl = en;
-      c -> io_FShark_rgmii_rxd = !edge ? byteout >> 4:  byteout & 0x0F ;
 
+        c -> io_FShark_rgmii_rx_clk = !edge;
+        c -> io_FShark_rgmii_rx_ctl = en;
+        c -> io_FShark_rgmii_rxd = !edge ? byteout >> 4:  byteout & 0x0F;
+      }else{
+        c -> io_FShark_rgmii_rx_clk = !edge;
+        c -> io_FShark_rgmii_rx_ctl = 0;
+        c -> io_FShark_rgmii_rxd = 0;
+      }
     }else{ //Manual RGMII simulation from 0-59
     //RGMII Source (RX)
     if(counter < 0){ // Delay start of RGMII interface simulation
@@ -474,8 +495,6 @@ public:
     }else if(counter == 8) {
       en = 1;
       byteout = dataCnt;
-
-
 
       if(dataCnt > 59){ // Checksum part of frame
         byteout = checksum[dataCnt-60];

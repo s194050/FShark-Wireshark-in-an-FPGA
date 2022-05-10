@@ -13,6 +13,7 @@ import ocp._
 class FifoIO[T <: Data](private val gen: T) extends Bundle {
   val enq = Flipped(new DecoupledIO(gen))
   val deq = new DecoupledIO(gen)
+  val writeToFIFO = Input(Bool())
 }
 
 /**

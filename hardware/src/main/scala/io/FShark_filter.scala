@@ -6,7 +6,7 @@ import chisel3.util._
   ssor used, is clocked slower than the utilised MAC.
  */
 
-class FMAC_filter(datawidth: Int = 16) extends  Module{
+class FShark_filter(datawidth: Int = 16) extends  Module{
   val io = IO(new Bundle{
     // MAC input and output
     val axis_tvalid = Input(Bool())
@@ -24,6 +24,7 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
 
     val filterIndex = Input(UInt(datawidth.W))
     val filterValue = Input(UInt((datawidth/2).W))
+    val filterSet = Input(Bool())
   })
   // Initialize counter register
   val cntFrame = RegInit(0.U(datawidth.W))
@@ -34,19 +35,25 @@ class FMAC_filter(datawidth: Int = 16) extends  Module{
   io.filter_bus.bits.addHeader := WireInit(false.B)
   io.filter_bus.bits.tdata := WireInit(0.U(datawidth.W))
 
+
+  when(!io.filterSet){ // Stall eveything until filter values are set
+    io.axis_tready := false.B
+  }
+
   // Counter
-  when(io.axis_tvalid) {
+  when(io.axis_tvalid && io.filterSet) {
     when(io.axis_tkeep =/= 3.U){ // Increment by one, when byte uneven.S
       cntFrame := cntFrame + 1.U
+    }.otherwise {
+      cntFrame := cntFrame + 2.U // Increment by two as bus width is 16 bit = 2 bytes
     }
-    cntFrame := cntFrame + 2.U // Increment by two as bus width is 16 bit = 2 bytes
   }
 
   // FSM to determine whether frame data in buffer is kept or flushed
   val bufferIdle :: bufferEvaluate:: bufferBadFrame :: bufferGoodFrame :: bufferFlushFrame :: bufferAddHeader :: Nil = Enum(6)
   val stateBuffer = RegInit(bufferIdle)
 
-when(io.filter_bus.ready) { // Only give data to buffer if it is not full
+when(io.filter_bus.ready && io.filterSet) { // Only give data to buffer if it is not full
   switch(stateBuffer) {
     is(bufferIdle) {
       // Reset booleans
@@ -67,8 +74,8 @@ when(io.filter_bus.ready) { // Only give data to buffer if it is not full
       io.axis_tready := true.B
       io.filter_bus.valid := true.B
       io.filter_bus.bits.tdata := io.axis_tdata
-      when(cntFrame === 18.U) {
-        when(io.axis_tdata === 0x1312.U) {
+      when(cntFrame === io.filterIndex) {
+        when(io.axis_tdata(7,0) === io.filterValue) {
           stateBuffer := bufferGoodFrame
         }.otherwise {
           stateBuffer := bufferBadFrame
@@ -95,7 +102,7 @@ when(io.filter_bus.ready) { // Only give data to buffer if it is not full
       io.axis_tready := true.B
       io.filter_bus.valid := true.B
       io.filter_bus.bits.addHeader := true.B
-      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1 // Divide by two and round up
+      io.filter_bus.bits.tdata := cntFrame //(cntFrame + 1.U) >> 1 // Divide by two and round up
 
 
       stateBuffer := bufferIdle
@@ -123,7 +130,7 @@ when(io.filter_bus.ready) { // Only give data to buffer if it is not full
       io.filter_bus.valid := true.B
       io.filter_bus.bits.flushFrame := true.B
 
-      io.filter_bus.bits.tdata := (cntFrame + 1.U) >> 1 // Divide by two, as we receive 16 bits
+      io.filter_bus.bits.tdata := cntFrame //(cntFrame + 1.U) >> 1 // Divide by two, as we receive 16 bits
 
       stateBuffer := bufferIdle
     }
