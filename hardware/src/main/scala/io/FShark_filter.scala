@@ -74,6 +74,12 @@ when(io.filter_bus.ready && io.filterSet) { // Only give data to buffer if it is
       io.axis_tready := true.B
       io.filter_bus.valid := true.B
       io.filter_bus.bits.tdata := io.axis_tdata
+      /*
+       when(filterIndex(0) == 1)
+          when(io.axis_tdata(15,8) === filtervalue{
+       when(filterIndex(0) == 0){
+          when(io.axis_tdata(7,0) === filterValue{
+       */
       when(cntFrame === io.filterIndex) {
         when(io.axis_tdata(7,0) === io.filterValue) {
           stateBuffer := bufferGoodFrame
