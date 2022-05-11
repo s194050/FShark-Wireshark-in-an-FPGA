@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP4CE115F29C7
 set_global_assignment -name TOP_LEVEL_ENTITY patmos_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "11.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:11:57  JUNE 19, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION "21.1.0 Lite Edition"
+set_global_assignment -name LAST_QUARTUS_VERSION "19.1.0 Lite Edition"
 
 
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
@@ -56,6 +56,11 @@ set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVCMOS"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
 
 set_location_assignment PIN_Y2 -to clk
+# Verilog MAC clock pinout
+#=============================================
+set_location_assignment PIN_AG14 -to CLOCK2_50
+set_location_assignment PIN_AG15 -to CLOCK3_50
+#=============================================
 set_location_assignment PIN_T8 -to oSRAM_A[19]
 set_location_assignment PIN_AB8 -to oSRAM_A[18]
 set_location_assignment PIN_AB9 -to oSRAM_A[17]
@@ -179,7 +184,6 @@ set_location_assignment PIN_D23 -to ENET1_MDC
 set_location_assignment PIN_D25 -to ENET1_MDIO
 set_location_assignment PIN_D13 -to ENET1_LINK100
 
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ENETCLK_25
 set_location_assignment PIN_A14 -to ENETCLK_25
 #=====================================================
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
@@ -317,6 +321,13 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_TX_CLK
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_MDC
 set_instance_assignment -name IO_STANDARD "2.5 V" -to ENET1_MDIO
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ENET1_LINK100
+
+#====================================================================
+#Verilog MAC clocks
+#====================================================================
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ENETCLK_25
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK2_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK3_50
 #====================================================================
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to oSRAM_A[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to oSRAM_A[1]

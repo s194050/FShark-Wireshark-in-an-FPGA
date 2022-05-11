@@ -37,7 +37,7 @@ entity patmos_top is
     ENET0_GTX_CLK : out std_logic;
     ENET0_TX_DATA : out std_logic_vector(3 downto 0);
     ENET0_TX_EN : out std_logic;
-    ENET0_RST_N : in std_logic;
+    ENET0_RST_N : out std_logic;
     ENET0_INT_N : in std_logic;
     --PHY1
     ENET1_RX_CLK : in std_logic;
@@ -46,7 +46,7 @@ entity patmos_top is
     ENET1_GTX_CLK : out std_logic;
     ENET1_TX_DATA : out std_logic_vector(3 downto 0);
     ENET1_TX_EN : out std_logic;
-    ENET1_RST_N : in std_logic;
+    ENET1_RST_N : out std_logic;
     ENET1_INT_N : in std_logic
   );
 end entity patmos_top;
@@ -112,6 +112,9 @@ architecture rtl of patmos_top is
   attribute altera_attribute of res_cnt : signal is "POWER_UP_LEVEL=LOW";
 
 begin
+  ENET0_RST_N <= not int_res;
+  ENET1_RST_N <= not int_res;
+  
   pll_inst : entity work.pll generic map(
       input_freq  => pll_infreq,
       multiply_by => pll_mult,
@@ -159,6 +162,7 @@ begin
   end process;
 
 
+
     -- tristate output to ssram
     process(sram_out_dout_ena, sram_out_dout)
     begin
@@ -185,9 +189,9 @@ begin
     io_FShark_rgmii_rx_clk => ENET0_RX_CLK,
     io_FShark_rgmii_rxd => ENET0_RX_DATA,
     io_FShark_rgmii_rx_ctl =>  ENET0_RX_DV,
-    io_FShark_rgmii_tx_clk => open, -- ENET0_GTX_CLK
-    io_FShark_rgmii_txd => open, -- ENET0_TX_DATA
-    io_FShark_rgmii_tx_ctl => open, --ENET0_TX_EN
+    io_FShark_rgmii_tx_clk =>  ENET0_GTX_CLK,
+    io_FShark_rgmii_txd => ENET0_TX_DATA,
+    io_FShark_rgmii_tx_ctl => ENET0_TX_EN,
 
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,
@@ -203,18 +207,18 @@ begin
     );
 
   -- Ethernet Pass-through
-  ENET1_GTX_CLK <= clk_125;
-  ENET1_TX_DATA <= ENET0_RX_DATA;
-  ENET1_TX_EN <= ENET0_RX_DV;
-  ENET0_GTX_CLK <= clk_125;
-  ENET0_TX_DATA <= ENET1_RX_DATA;
-  ENET0_TX_EN <= ENET1_RX_DV;
+  --ENET1_GTX_CLK <= clk_125;
+  --ENET1_TX_DATA <= ENET0_RX_DATA;
+  --ENET1_TX_EN <= ENET0_RX_DV;
+  --ENET0_GTX_CLK <= clk_125;
+  --ENET0_TX_DATA <= ENET1_RX_DATA;
+  --ENET0_TX_EN <= ENET1_RX_DV;
 
-  oGpioPins(0) <= ENET0_RX_CLK;
-  oGpioPins(4 downto 1) <= ENET0_RX_DATA;
-  oGpioPins(5) <=  ENET0_RX_DV;
-  oGpioPins(6) <= ENET1_RX_CLK;
-  oGpioPins(10 downto 7) <= ENET1_RX_DATA;
-  oGpioPins(11) <= ENET1_RX_DV;
+  --oGpioPins(0) <= ENET0_RX_CLK;
+  --oGpioPins(4 downto 1) <= ENET0_RX_DATA;
+  --oGpioPins(5) <=  ENET0_RX_DV;
+  --oGpioPins(6) <= ENET1_RX_CLK;
+  --oGpioPins(10 downto 7) <= ENET1_RX_DATA;
+  --oGpioPins(11) <= ENET1_RX_DV;
 
 end architecture rtl;

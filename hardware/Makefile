@@ -14,8 +14,8 @@ BOOTSPM_BASE?=0x00020000
 
 HWMODULEPREFIX?=
 
-#SBT=java -Xmx1024M -Xss8M -jar sbt/sbt-launch.jar
-SBT= sbt
+SBT=java -Xmx2048M -Xss8M -jar sbt/sbt-launch.jar
+#SBT= sbt
 
 # C++ build flags
 CXX=g++

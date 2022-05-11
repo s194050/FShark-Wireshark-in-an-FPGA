@@ -5,7 +5,7 @@ import ocp._
 
 object FShark extends DeviceObject {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
-  var target = "SIM"
+  var target = "ALTERA"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
@@ -87,6 +87,16 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
   override def desiredName: String = "eth_mac_1g_rgmii_fifo"
 }
 
+class resetsync(N: Int) extends BlackBox(Map("N" -> N)){
+  val io = IO(new Bundle(){
+    val clk = Input(Clock())
+    val in = Input(Bool())
+    val out = Output(Bool())
+  })
+
+  override def desiredName: String = "sync_signal"
+}
+
 
 // Top file for MAC, filter and circular buffer
 class FShark(target: String,datawidth: Int) extends CoreDevice {
@@ -104,7 +114,15 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val filterValue = RegInit(0.U((datawidth/2).W)) // Only check a byte 16/2 = 8 bit = 1 byte
   val filterSet = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
+
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
+  /*
+  // Verilog reset synchronizer blackbox
+  val asyncReset = Module(new resetsync(4))
+  asyncReset.io.clk := clock
+  asyncReset.io.in := reset
+  */
+
   //Filter for FMAC, input to the Circular buffer
   val FShark_filter = Module(new FShark_filter(datawidth))
   // Connecting MAC and filter
