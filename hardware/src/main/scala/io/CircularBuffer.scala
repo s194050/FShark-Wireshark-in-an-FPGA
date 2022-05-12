@@ -40,11 +40,11 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   IO's  to push and pop and get status
   */
   val data = Reg(Vec(actualDepth, UInt(datawidth.W)))
-  val head = RegInit(1.U((bitWidth + 1).W))
-  val tail = RegInit(0.U((bitWidth + 1).W))
+  val head = RegInit(1.U((bitWidth).W))
+  val tail = RegInit(0.U((bitWidth).W))
   val bufferValue = WireInit(0.U(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
-  val counter = RegInit(0.U((bitWidth + 1).W))
+  val counter = RegInit(0.U((bitWidth).W))
   // Boolean to handle whether a frame is being received
   io.frameRecieving := RegInit(false.B)
 
