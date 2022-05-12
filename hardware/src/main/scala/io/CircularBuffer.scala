@@ -13,7 +13,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   val bitWidth = log2Ceil(depth)
   val actualDepth = math.pow(2,bitWidth).toInt// Calculate the actual depth, to confer with log2 logic
   val io = IO(new Bundle{
-    val bufferData = Output(Vec(actualDepth, UInt(datawidth.W)))
+    //val bufferData = Output(Vec(actualDepth, UInt(datawidth.W)))
     val bufferLength = Output(UInt((bitWidth).W))
 
     val filter_bus = Flipped(Decoupled(new Bundle {
@@ -40,11 +40,11 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   IO's  to push and pop and get status
   */
   val data = Reg(Vec(actualDepth, UInt(datawidth.W)))
-  val head = RegInit(1.U(bitWidth.W))
-  val tail = RegInit(0.U(bitWidth.W))
+  val head = RegInit(1.U((bitWidth + 1).W))
+  val tail = RegInit(0.U((bitWidth + 1).W))
   val bufferValue = WireInit(0.U(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
-  val counter = RegInit(0.U(bitWidth.W))
+  val counter = RegInit(0.U((bitWidth + 1).W))
   // Boolean to handle whether a frame is being received
   io.frameRecieving := RegInit(false.B)
 
@@ -117,6 +117,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
 
   // Mapping the indices between current head and tail
   // to the 0 to n indices of the buffer
+  /*
   def mappedIndex(i: Int): UInt = {
     val out = Wire(UInt((actualDepth).W))
     when((i.U + head) <= actualDepth.U) {
@@ -131,7 +132,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   io.bufferData.zipWithIndex.foreach { case (bufferElement, index) =>
     bufferElement := data(mappedIndex((index)))
   }
-
+*/
   // The number of valid data in the current buffer
   val difference = (head - 1.U) - tail
   when(difference < 0.U) {
