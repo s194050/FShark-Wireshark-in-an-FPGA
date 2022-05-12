@@ -5,7 +5,7 @@ import ocp._
 
 object FShark extends DeviceObject {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
-  var target = "ALTERA"
+  var target = "SIM"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
@@ -110,18 +110,11 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val writeToFIFO = RegInit(true.B)
   // Initiate OCP interface variables
   val stopFrameRecording = RegInit(false.B)
-  val filterIndex = RegInit(0.U((datawidth/2).W))
+  val filterIndex = RegInit(0.U(12.W))
   val filterValue = RegInit(0.U((datawidth/2).W)) // Only check a byte 16/2 = 8 bit = 1 byte
   val filterSet = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
-
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
-  /*
-  // Verilog reset synchronizer blackbox
-  val asyncReset = Module(new resetsync(4))
-  asyncReset.io.clk := clock
-  asyncReset.io.in := reset
-  */
 
   //Filter for FMAC, input to the Circular buffer
   val FShark_filter = Module(new FShark_filter(datawidth))
@@ -133,8 +126,8 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   FShark_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
   FShark_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
-  val CircBuffer = Module(new CircularBuffer(200,datawidth))
-  val memFifo = Module(new MemFifo(UInt(datawidth.W),300))
+  val CircBuffer = Module(new CircularBuffer(500,datawidth))
+  val memFifo = Module(new MemFifo(UInt(datawidth.W),800))
   // Connecting buffer and FIFO
   //---------------------------
   endOfFrame := CircBuffer.io.endOfFrame
@@ -280,11 +273,11 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
         dataWriter := io.ocp.M.Data
       }
       is(2.U){ // Assign the input value to filter index
-        filterIndex := io.ocp.M.Data(7,0)
-        filterSet := false.B
+        filterIndex := io.ocp.M.Data(11,0) // Current filter design only accepts a single byte
+        filterSet := false.B // If new filter values are applied wait until filter is set
       }
       is(3.U){ // Which value to filter through, if not this value the frame is discarded
-        filterValue := io.ocp.M.Data(7,0)
+        filterValue := io.ocp.M.Data(7,0) // Current filter design only accepts a single byte
         filterSet := true.B // Do not process any values until filter is set.
       }
     }
