@@ -25,7 +25,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     val endOfFrame = Output(Bool())
     val frameRecieving = Output(Bool())
   })
-  print(actualDepth)
+  //print(actualDepth)
   //Initialize signals
   val readFrom = RegInit(false.B)
   val bufferFull = WireInit(false.B)
@@ -90,7 +90,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     data(Address) := io.filter_bus.bits.tdata
   }
 
-  when(io.deq.ready && !bufferEmpty && readFrom){ // && io.filter_bus.bits.goodFrame When ocp is removed.
+  when(io.deq.ready && !bufferEmpty && readFrom){ // read a whole frame from the buffer
   when(tail === actualDepth){
       tail  := 0.U
     }.otherwise{
