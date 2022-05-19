@@ -28,7 +28,6 @@ class FShark_filter(datawidth: Int = 16) extends  Module {
   })
   // Initialize counter registers
   val cntFrame = RegInit(0.U(12.W))
-  //val cntBytes = RegInit(0.U((datawidth / 8).W))
   val cntBytes = RegInit(0.U((datawidth / 8).W))
 
   // Initialize booleans
@@ -94,7 +93,7 @@ class FShark_filter(datawidth: Int = 16) extends  Module {
           }
         } else{
           when(cntFrame(11, checkIndex) === io.filterIndex(11, checkIndex)) {
-            when((io.axis_tdata >> (indexHighLow *8.U))(7,0) === io.filterValue) { // Right shift and mask
+            when((io.axis_tdata >> (indexHighLow * 8.U))(7,0) === io.filterValue) { // Right shift and mask
               stateBuffer := bufferGoodFrame
             }.otherwise {
               stateBuffer := bufferBadFrame

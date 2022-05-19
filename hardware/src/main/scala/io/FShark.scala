@@ -87,17 +87,6 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
   override def desiredName: String = "eth_mac_1g_rgmii_fifo"
 }
 
-class resetsync(N: Int) extends BlackBox(Map("N" -> N)){
-  val io = IO(new Bundle(){
-    val clk = Input(Clock())
-    val in = Input(Bool())
-    val out = Output(Bool())
-  })
-
-  override def desiredName: String = "sync_signal"
-}
-
-
 // Top file for MAC, filter and circular buffer
 class FShark(target: String,datawidth: Int) extends CoreDevice {
   override val io = IO(new CoreDeviceIO() with FShark.Pins {})

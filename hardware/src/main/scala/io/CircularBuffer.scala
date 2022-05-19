@@ -49,9 +49,9 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   io.frameRecieving := RegInit(false.B)
 
   // For handling flushing of a bad frame
-  val temp = Mux(io.filter_bus.bits.flushFrame,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 1.U), head)
+  val flush = Mux(io.filter_bus.bits.flushFrame,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 1.U), head)
   // For adding the header containing length in front of the frame
-  val Address = Mux(io.filter_bus.bits.addHeader,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 2.U), temp)
+  val Address = Mux(io.filter_bus.bits.addHeader,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 2.U), flush)
 
   //Status booleans
   // Check buffer status
@@ -112,7 +112,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
 
   when(io.filter_bus.bits.flushFrame){ // Flush the frame by moving header back
     io.deq.valid := false.B
-    head := temp
+    head := flush
   }
 
   // Mapping the indices between current head and tail
