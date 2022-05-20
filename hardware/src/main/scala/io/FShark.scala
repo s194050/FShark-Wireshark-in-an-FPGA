@@ -5,7 +5,7 @@ import ocp._
 
 object FShark extends DeviceObject {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
-  var target = "SIM"
+  var target = "ALTERA"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
