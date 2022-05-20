@@ -4,14 +4,14 @@
 
 # Clock in input pin (50 MHz)
 create_clock -period 20 [get_ports clk]
-#create_clock -period 20.00 -name {clk_125}  [get_ports {CLOCK2_50}]
+create_clock -period 20 [get_ports CLOCK2_50]
 #create_clock -period 20.00 -name {CLOCK3_50}  [get_ports {CLOCK3_50}]
 
 # Clock PHY (25MHz)
 #create_clock -period 40.00 -name {ENETCLK_25} [get_ports {ENETCLK_25}]
 
-set_clock_groups -asynchronous -group [get_clocks {clk}]
-#set_clock_groups -asynchronous -group [get_clocks {CLOCK2_50}]
+#set_clock_groups -asynchronous -group [get_clocks {clk}]
+set_clock_groups -asynchronous -group [get_clocks {CLOCK2_50}]
 #set_clock_groups -asynchronous -group [get_clocks {CLOCK3_50}]
 #set_clock_groups -asynchronous -group [get_clocks {ENETCLK_25}]
 

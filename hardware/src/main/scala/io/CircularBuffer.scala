@@ -39,10 +39,13 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   /*
   IO's  to push and pop and get status
   */
+  val mem = Mem(actualDepth, UInt(datawidth.W))
+
   val data = Reg(Vec(actualDepth, UInt(datawidth.W)))
   val head = RegInit(1.U((bitWidth).W))
   val tail = RegInit(0.U((bitWidth).W))
   val bufferValue = WireInit(0.U(datawidth.W))
+  //val bufferValue = Reg(UInt(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
   val counter = RegInit(0.U((bitWidth).W))
   // Boolean to handle whether a frame is being received
@@ -66,7 +69,6 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     readFrom := false.B
   }
 
-
   when(io.filter_bus.bits.addHeader){ // Signals End of frame, as such move back to place the header value
     io.endOfFrame := true.B
     readFrom := true.B
@@ -87,7 +89,8 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     }.otherwise{
       head := head + 1.U
     }
-    data(Address) := io.filter_bus.bits.tdata
+    //data(Address) := io.filter_bus.bits.tdata
+    mem.write(Address,io.filter_bus.bits.tdata)
   }
 
   when(io.deq.ready && !bufferEmpty && readFrom){ // read a whole frame from the buffer
@@ -96,7 +99,9 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     }.otherwise{
       tail := tail + 1.U
     }
-    bufferValue := data(tail)
+
+    //bufferValue := data(tail)
+    bufferValue := mem.read(tail)
 
     when(counter === (readValue + 1.U) && readValue =/= 0.U){ // Count until frame + header
       readFrom := false.B // Reset values
