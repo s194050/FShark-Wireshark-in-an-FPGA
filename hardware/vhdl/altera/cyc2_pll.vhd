@@ -145,7 +145,7 @@ BEGIN
 		clk3_duty_cycle => 50,
 		clk3_multiply_by => multiply_by,
 		clk3_phase_shift => integer'image(3*output_period/4),
-		compensate_clock => "CLK0",
+		compensate_clock => "CLK1",
 		gate_lock_signal => "NO",
 		inclk0_input_frequency => integer(1000000.0/input_freq),
 		intended_device_family => "Cyclone II",

@@ -117,7 +117,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   FShark_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
   val CircBuffer = Module(new CircularBuffer(1536,datawidth))
-  val memFifo = Module(new MemFifo(UInt(datawidth.W),1000))
+  val memFifo = Module(new MemFifo(UInt(datawidth.W),20000))
   // Connecting buffer and FIFO
   //---------------------------
   endOfFrame := CircBuffer.io.endOfFrame
