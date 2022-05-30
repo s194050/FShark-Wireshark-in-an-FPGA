@@ -17,6 +17,7 @@ use ieee.numeric_std.all;
 entity patmos_top is
   port(
     clk : in  std_logic;
+	  CLOCK2_50 : in std_logic;
     oLedsPins_led : out std_logic_vector(8 downto 0);
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
@@ -56,6 +57,7 @@ architecture rtl of patmos_top is
 		port(
 			clock           : in  std_logic;
 			reset           : in  std_logic;
+			
 
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
@@ -103,7 +105,7 @@ architecture rtl of patmos_top is
   signal int_res            : std_logic;
   signal res_reg1, res_reg2 : std_logic;
   signal res_cnt            : unsigned(2 downto 0) := "000"; -- for the simulation
-
+  
     -- sram signals for tristate inout
     signal sram_out_dout_ena : std_logic;
     signal sram_out_dout : std_logic_vector(15 downto 0);
@@ -129,7 +131,7 @@ begin
     );
 
 
-	 pll_inst2 : entity work.pll generic map(
+	pll_inst2 : entity work.pll generic map(
       input_freq  => pll_infreq,
       multiply_by => pll_mult,
       divide_by   => pll_div,
@@ -138,7 +140,8 @@ begin
       clk1_divide_by => clk1_div
     )
     port map(
-	   inclk0 => clk,
+	   inclk0 => CLOCK2_50,
+		c0 => open,
       c1     => clk_125,
       c2     => clk_125_90
     );
@@ -160,9 +163,8 @@ begin
       int_res  <= res_reg2;
     end if;
   end process;
-
-
-
+  
+  
     -- tristate output to ssram
     process(sram_out_dout_ena, sram_out_dout)
     begin
@@ -177,9 +179,12 @@ begin
     patmos_inst : Patmos port map(
     clock => clk_int,
     reset => int_res,
+	 
+	 
     io_FShark_gtx_clk => clk_125,
     io_FShark_gtx_clk90 => clk_125_90,
     io_FShark_gtx_rst =>  int_res,
+	 --io_FShark_logic_rst => int_res2,
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
@@ -206,19 +211,6 @@ begin
 
     );
 
-  -- Ethernet Pass-through
-  --ENET1_GTX_CLK <= clk_125;
-  --ENET1_TX_DATA <= ENET0_RX_DATA;
-  --ENET1_TX_EN <= ENET0_RX_DV;
-  --ENET0_GTX_CLK <= clk_125;
-  --ENET0_TX_DATA <= ENET1_RX_DATA;
-  --ENET0_TX_EN <= ENET1_RX_DV;
 
-  --oGpioPins(0) <= ENET0_RX_CLK;
-  --oGpioPins(4 downto 1) <= ENET0_RX_DATA;
-  --oGpioPins(5) <=  ENET0_RX_DV;
-  --oGpioPins(6) <= ENET1_RX_CLK;
-  --oGpioPins(10 downto 7) <= ENET1_RX_DATA;
-  --oGpioPins(11) <= ENET1_RX_DV;
-
+  ENET0_RST_N <= '1';
 end architecture rtl;

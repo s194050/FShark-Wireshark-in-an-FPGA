@@ -25,7 +25,6 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     val endOfFrame = Output(Bool())
     val frameRecieving = Output(Bool())
   })
-  print(actualDepth)
   //Initialize signals
   val readFrom = RegInit(false.B)
   val bufferFull = WireInit(false.B)
@@ -39,6 +38,8 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   /*
   IO's  to push and pop and get status
   */
+  val mem = Mem(actualDepth, UInt(datawidth.W))
+
   val data = Reg(Vec(actualDepth, UInt(datawidth.W)))
   val head = RegInit(1.U((bitWidth).W))
   val tail = RegInit(0.U((bitWidth).W))
@@ -49,9 +50,9 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   io.frameRecieving := RegInit(false.B)
 
   // For handling flushing of a bad frame
-  val temp = Mux(io.filter_bus.bits.flushFrame,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 1.U), head)
+  val flush = Mux(io.filter_bus.bits.flushFrame,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 1.U), head)
   // For adding the header containing length in front of the frame
-  val Address = Mux(io.filter_bus.bits.addHeader,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 2.U), temp)
+  val Address = Mux(io.filter_bus.bits.addHeader,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 2.U), flush)
 
   //Status booleans
   // Check buffer status
@@ -65,7 +66,6 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     io.deq.valid := false.B
     readFrom := false.B
   }
-
 
   when(io.filter_bus.bits.addHeader){ // Signals End of frame, as such move back to place the header value
     io.endOfFrame := true.B
@@ -87,16 +87,17 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
     }.otherwise{
       head := head + 1.U
     }
-    data(Address) := io.filter_bus.bits.tdata
+    mem.write(Address,io.filter_bus.bits.tdata)
   }
 
-  when(io.deq.ready && !bufferEmpty && readFrom){ // && io.filter_bus.bits.goodFrame When ocp is removed.
+  when(io.deq.ready && !bufferEmpty && readFrom){ // read a whole frame from the buffer
   when(tail === actualDepth){
       tail  := 0.U
     }.otherwise{
       tail := tail + 1.U
     }
-    bufferValue := data(tail)
+
+    bufferValue := mem.read(tail)
 
     when(counter === (readValue + 1.U) && readValue =/= 0.U){ // Count until frame + header
       readFrom := false.B // Reset values
@@ -112,7 +113,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
 
   when(io.filter_bus.bits.flushFrame){ // Flush the frame by moving header back
     io.deq.valid := false.B
-    head := temp
+    head := flush
   }
 
   // Mapping the indices between current head and tail

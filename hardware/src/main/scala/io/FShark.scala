@@ -5,7 +5,7 @@ import ocp._
 
 object FShark extends DeviceObject {
   // target for sim = SIM / GENERIC, target for synth = ALTERA / XILINX
-  var target = "SIM"
+  var target = "ALTERA"
   var datawidth = 16
 
   def init(params: Map[String, String]) = {
@@ -87,17 +87,6 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
   override def desiredName: String = "eth_mac_1g_rgmii_fifo"
 }
 
-class resetsync(N: Int) extends BlackBox(Map("N" -> N)){
-  val io = IO(new Bundle(){
-    val clk = Input(Clock())
-    val in = Input(Bool())
-    val out = Output(Bool())
-  })
-
-  override def desiredName: String = "sync_signal"
-}
-
-
 // Top file for MAC, filter and circular buffer
 class FShark(target: String,datawidth: Int) extends CoreDevice {
   override val io = IO(new CoreDeviceIO() with FShark.Pins {})
@@ -127,7 +116,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   FShark_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
   val CircBuffer = Module(new CircularBuffer(1536,datawidth))
-  val memFifo = Module(new MemFifo(UInt(datawidth.W),2000))
+  val memFifo = Module(new MemFifo(UInt(datawidth.W),20000))
   // Connecting buffer and FIFO
   //---------------------------
   endOfFrame := CircBuffer.io.endOfFrame
