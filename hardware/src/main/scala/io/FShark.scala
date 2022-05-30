@@ -31,6 +31,14 @@ object FShark extends DeviceObject {
       val rgmii_tx_clk = Output(Clock())
       val rgmii_txd = Output(UInt(4.W))
       val rgmii_tx_ctl = Output(Bool())
+      //RGMII interface second instance
+      //-------------------------------
+      val rgmii_rx_clk_1 = Input(Clock())
+      val rgmii_rxd_1    = Input(UInt(4.W))
+      val rgmii_rx_ctl_1 = Input(Bool())
+      val rgmii_tx_clk_1 = Output(Clock())
+      val rgmii_txd_1    = Output(UInt(4.W))
+      val rgmii_tx_ctl_1 = Output(Bool())
     }
   }
 }
@@ -105,6 +113,23 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val filterSet = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
+  // Verilog Ethernet MAC blackbox instance two
+  val ethmac1g_1 = Module(new eth_mac_1gBB(target,datawidth))
+  // Loop the AXI interface of the two MAC's
+  //----------------------------------------
+  ethmac1g_1.io.rx_axis_tdata  <> ethmac1g.io.tx_axis_tdata
+  ethmac1g_1.io.rx_axis_tkeep  <> ethmac1g.io.tx_axis_tkeep
+  ethmac1g_1.io.rx_axis_tvalid <> ethmac1g.io.tx_axis_tvalid
+  ethmac1g_1.io.rx_axis_tready <> ethmac1g.io.tx_axis_tready
+  ethmac1g_1.io.rx_axis_tlast  <> ethmac1g.io.tx_axis_tlast
+  ethmac1g_1.io.rx_axis_tuser  <> ethmac1g.io.tx_axis_tuser
+
+  ethmac1g_1.io.tx_axis_tdata  <> ethmac1g.io.rx_axis_tdata
+  ethmac1g_1.io.tx_axis_tkeep  <> ethmac1g.io.rx_axis_tkeep
+  ethmac1g_1.io.tx_axis_tvalid <> ethmac1g.io.rx_axis_tvalid
+  ethmac1g_1.io.tx_axis_tready <> ethmac1g.io.rx_axis_tready
+  ethmac1g_1.io.tx_axis_tlast  <> ethmac1g.io.rx_axis_tlast
+  ethmac1g_1.io.tx_axis_tuser  <> ethmac1g.io.rx_axis_tuser
 
   //Filter for FMAC, input to the Circular buffer
   val FShark_filter = Module(new FShark_filter(datawidth))
@@ -157,6 +182,23 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   io.pins.rgmii_tx_clk := ethmac1g.io.rgmii_tx_clk
   io.pins.rgmii_txd := ethmac1g.io.rgmii_txd
   io.pins.rgmii_tx_ctl := ethmac1g.io.rgmii_tx_ctl
+  //---------------------------------------------------------------------
+  // Connect the pins straight through for the second instance of the MAC
+  // Clock and logic
+  ethmac1g_1.io.gtx_clk   := io.pins.gtx_clk
+  ethmac1g_1.io.gtx_rst   := io.pins.gtx_rst
+  ethmac1g_1.io.gtx_clk90 := io.pins.gtx_clk90
+  ethmac1g_1.io.logic_clk := clock
+  ethmac1g_1.io.logic_rst := reset
+  // Configuration
+  ethmac1g_1.io.ifg_delay := WireInit(12.U(datawidth.W))
+  // RGMII Interface
+  ethmac1g_1.io.rgmii_rx_clk   := io.pins.rgmii_rx_clk_1
+  ethmac1g_1.io.rgmii_rxd      := io.pins.rgmii_rxd_1
+  ethmac1g_1.io.rgmii_rx_ctl   := io.pins.rgmii_rx_ctl_1
+  io.pins.rgmii_tx_clk_1       := ethmac1g_1.io.rgmii_tx_clk
+  io.pins.rgmii_txd_1          := ethmac1g_1.io.rgmii_txd
+  io.pins.rgmii_tx_ctl_1       := ethmac1g_1.io.rgmii_tx_ctl
 
   // Default response
   val respReg = RegInit(OcpResp.NULL)
