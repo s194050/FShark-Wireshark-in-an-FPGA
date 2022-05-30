@@ -17,7 +17,7 @@ use ieee.numeric_std.all;
 entity patmos_top is
   port(
     clk : in  std_logic;
-	 CLOCK2_50 : in std_logic;
+	  CLOCK2_50 : in std_logic;
     oLedsPins_led : out std_logic_vector(8 downto 0);
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
@@ -62,7 +62,7 @@ architecture rtl of patmos_top is
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
       io_UartCmp_tx                    : out std_logic;
-		io_UartCmp_rx                    : in  std_logic;
+		  io_UartCmp_rx                    : in  std_logic;
 
 	   --Clock and logic
       io_FShark_gtx_clk : in std_logic;
@@ -211,19 +211,6 @@ begin
 
     );
 
-  -- Ethernet Pass-through
-  --ENET1_GTX_CLK <= clk_125;
-  --ENET1_TX_DATA <= ENET0_RX_DATA;
-  --ENET1_TX_EN <= ENET0_RX_DV;
-  --ENET0_GTX_ <= clk_125;
-  --ENET0_TX_DATA <= ENET1_RX_DATA;
-  --ENET0_TX_EN <= ENET1_RX_DV;
 
-  --oGpioPins(0) <= ENET0_RX_CLK;
-  --oGpioPins(4 downto 1) <= ENET0_RX_DATA;
-  --oGpioPins(5) <=  ENET0_RX_DV;
-  --oGpioPins(6) <= ENET1_RX_CLK;
-  --oGpioPins(10 downto 7) <= ENET1_RX_DATA;
-  --oGpioPins(11) <= ENET1_RX_DV;
-
+  ENET0_RST_N <= '1';
 end architecture rtl;

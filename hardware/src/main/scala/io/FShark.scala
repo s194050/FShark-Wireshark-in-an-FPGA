@@ -22,7 +22,6 @@ object FShark extends DeviceObject {
       val gtx_clk = Input(Clock())
       val gtx_clk90 = Input(Clock())
       val gtx_rst = Input(Bool())
-      //val logic_rst = Input(Bool())
       //RGMII interface
       //---------------
       val rgmii_rx_clk = Input(Clock())
