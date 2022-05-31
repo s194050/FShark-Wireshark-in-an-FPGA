@@ -12,7 +12,8 @@ int main(){
     volatile _IODEV int *dead_ptr = (volatile _IODEV int *) PATMOS_IO_DEADLINE;
     int val;
     int packet = 0;
-
+    *uart_data = 1;
+    //UART_DATA = 1;
     *filter_index = 18;
 	*filter_value = 18;
 	
@@ -26,6 +27,7 @@ int main(){
         packet = *io_ptr;
 
         *uart_data = packet;
+       
 
         while ((*uart_status & 0x01) == 0) {
 			;
