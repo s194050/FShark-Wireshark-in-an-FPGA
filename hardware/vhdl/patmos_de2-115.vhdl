@@ -127,7 +127,8 @@ begin
     )
     port map(
       inclk0 => clk,
-      c0     => clk_int
+      c0     => clk_int,
+		c1     => clk_125
     );
 
 
@@ -142,7 +143,7 @@ begin
     port map(
 	   inclk0 => CLOCK2_50,
 		c0 => open,
-      c1     => clk_125,
+      c1     => open,
       c2     => clk_125_90
     );
   -- we use a PLL

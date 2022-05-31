@@ -22,7 +22,8 @@ def sendeth(src, dst, eth_type, payload, interface = "ens33"):
 
 if __name__ == "__main__":
   print("Sent %d-byte Ethernet packet on eth0" %
-    sendeth("\x00\x0C\x29\x85\xA4\x2B",
-            "\x00\x50\x56\xEF\x56\x57",
+    sendeth("\x00\x00\x00\x00\x00\x00",
+            "\x00\x0C\x29\x85\xA4\x2B",
             "\x7A\x05",
             "\x00\x10\x11\x12\x13\x14\x15"))
+#"\x00\x50\x56\xEF\x56\x57",
