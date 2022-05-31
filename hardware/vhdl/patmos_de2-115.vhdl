@@ -117,35 +117,45 @@ begin
   --ENET0_RST_N <= not int_res;
   --ENET1_RST_N <= not int_res;
   
-  pll_inst : entity work.pll generic map(
-      input_freq  => pll_infreq,
-      multiply_by => pll_mult,
-      divide_by   => pll_div,
-
-		clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div
-    )
-    port map(
-      inclk0 => clk,
-      c0     => clk_int,
-		c1     => clk_125
-    );
+  cyc4_pll_all_inst : entity work.cyc4_pll_all PORT MAP (
+      inclk0	 => clk,
+      c0	 => clk_int,
+      c1	 => clk_125,
+      c2	 => clk_125_90,
+      locked	 => open
+  );
 
 
-	pll_inst2 : entity work.pll generic map(
-      input_freq  => pll_infreq,
-      multiply_by => pll_mult,
-      divide_by   => pll_div,
 
-      clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div
-    )
-    port map(
-	   inclk0 => CLOCK2_50,
-		c0 => open,
-      c1     => open,
-      c2     => clk_125_90
-    );
+  -- pll_inst : entity work.pll generic map(
+  --    input_freq  => pll_infreq,
+  --    multiply_by => pll_mult,
+  --    divide_by   => pll_div,
+
+	--	clk1_multiply_by => clk1_mult,
+  --    clk1_divide_by => clk1_div
+  --  )
+  --  port map(
+  --    inclk0 => clk,
+  --    c0     => clk_int,
+	--	c1     => open
+  --  );
+
+
+	--pll_inst2 : entity work.pll generic map(
+  --    input_freq  => pll_infreq,
+  --    multiply_by => pll_mult,
+  --    divide_by   => pll_div,
+
+  --    clk1_multiply_by => clk1_mult,
+  --    clk1_divide_by => clk1_div
+  --  )
+  --  port map(
+	--   inclk0 => CLOCK2_50,
+	--	c0 => open,
+  --    c1     => open,
+  --    c2     => clk_125_90
+  --  );
   -- we use a PLL
   -- clk_int <= clk;
 
