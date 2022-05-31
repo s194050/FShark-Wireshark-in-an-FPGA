@@ -212,5 +212,5 @@ begin
     );
 
 
-  ENET0_RST_N <= '1';
+  --ENET0_RST_N <= '1';
 end architecture rtl;
