@@ -187,7 +187,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
     }
 
     is(fill) { // Keep filling the FIFO with frame data until trigger or the FIFO is full
-
+      stateReg := waitForEOF
       when(stopFrameRecording) { // Trigger, that determines that the current data is to be sent along
         stateReg := waitForEOF
       }

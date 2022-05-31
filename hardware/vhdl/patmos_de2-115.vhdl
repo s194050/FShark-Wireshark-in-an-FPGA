@@ -114,8 +114,8 @@ architecture rtl of patmos_top is
   attribute altera_attribute of res_cnt : signal is "POWER_UP_LEVEL=LOW";
 
 begin
-  ENET0_RST_N <= not int_res;
-  ENET1_RST_N <= not int_res;
+  --ENET0_RST_N <= not int_res;
+  --ENET1_RST_N <= not int_res;
   
   pll_inst : entity work.pll generic map(
       input_freq  => pll_infreq,
@@ -212,5 +212,6 @@ begin
     );
 
 
-  --ENET0_RST_N <= '1';
+  ENET0_RST_N <= '1';
+  ENET1_RST_N <= '1';
 end architecture rtl;
