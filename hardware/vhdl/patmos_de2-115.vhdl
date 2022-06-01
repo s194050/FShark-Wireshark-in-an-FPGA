@@ -17,7 +17,6 @@ use ieee.numeric_std.all;
 entity patmos_top is
   port(
     clk : in  std_logic;
-	  CLOCK2_50 : in std_logic;
     oLedsPins_led : out std_logic_vector(8 downto 0);
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
@@ -117,34 +116,30 @@ begin
   ENET0_RST_N <= not int_res;
   ENET1_RST_N <= not int_res;
   
-  pll_inst : entity work.pll generic map(
-      input_freq  => pll_infreq,
-      multiply_by => pll_mult,
-      divide_by   => pll_div,
-
-		clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div
-    )
-    port map(
-      inclk0 => clk,
-      c0     => clk_int
-    );
+  cyc4_pll_all_inst : entity work.cyc4_pll_all PORT MAP (
+      inclk0	 => clk,
+      c0	 => clk_int,
+      c1	 => clk_125,
+      c2	 => clk_125_90,
+      locked	 => open
+  );
 
 
-	pll_inst2 : entity work.pll generic map(
-      input_freq  => pll_infreq,
-      multiply_by => pll_mult,
-      divide_by   => pll_div,
 
-      clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div
-    )
-    port map(
-	   inclk0 => CLOCK2_50,
-		c0 => open,
-      c1     => clk_125,
-      c2     => clk_125_90
-    );
+  -- pll_inst : entity work.pll generic map( --Old Patmos Cyclone II PLL
+  --    input_freq  => pll_infreq,
+  --    multiply_by => pll_mult,
+  --    divide_by   => pll_div,
+
+	--	clk1_multiply_by => clk1_mult,
+  --    clk1_divide_by => clk1_div
+  --  )
+  --  port map(
+  --    inclk0 => clk,
+  --    c0     => clk_int,
+	--	c1     => open
+  --  );
+
   -- we use a PLL
   -- clk_int <= clk;
 
@@ -212,5 +207,6 @@ begin
     );
 
 
-  ENET0_RST_N <= '1';
+  --ENET0_RST_N <= '1';
+  --ENET1_RST_N <= '1';
 end architecture rtl;
