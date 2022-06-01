@@ -17,7 +17,7 @@ use ieee.numeric_std.all;
 entity patmos_top is
   port(
     clk : in  std_logic;
-	  CLOCK2_50 : in std_logic;
+	 --CLOCK2_50 : in std_logic;
     oLedsPins_led : out std_logic_vector(8 downto 0);
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
