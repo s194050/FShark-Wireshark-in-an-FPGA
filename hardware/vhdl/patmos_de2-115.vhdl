@@ -17,7 +17,6 @@ use ieee.numeric_std.all;
 entity patmos_top is
   port(
     clk : in  std_logic;
-	  CLOCK2_50 : in std_logic;
     oLedsPins_led : out std_logic_vector(8 downto 0);
     iKeysPins_key : in std_logic_vector(3 downto 0);
     oUartPins_txd : out std_logic;
@@ -62,7 +61,7 @@ architecture rtl of patmos_top is
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
       io_UartCmp_tx                    : out std_logic;
-		io_UartCmp_rx                    : in  std_logic;
+		  io_UartCmp_rx                    : in  std_logic;
 
 	   --Clock and logic
       io_FShark_gtx_clk : in std_logic;
@@ -75,14 +74,6 @@ architecture rtl of patmos_top is
       io_FShark_rgmii_tx_clk : out std_logic;
       io_FShark_rgmii_txd : out std_logic_vector(3 downto 0);
       io_FShark_rgmii_tx_ctl : out std_logic;
-      --------------------------------------
-      io_FShark_rgmii_rx_clk_1 : in std_logic;
-      io_FShark_rgmii_rxd_1 : in std_logic_vector(3 downto 0);
-      io_FShark_rgmii_rx_ctl_1 : in std_logic;
-      io_FShark_rgmii_tx_clk_1 : out std_logic;
-      io_FShark_rgmii_txd_1 : out std_logic_vector(3 downto 0);
-      io_FShark_rgmii_tx_ctl_1 : out std_logic;
-      ------------------------------------------
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -125,34 +116,30 @@ begin
   ENET0_RST_N <= not int_res;
   ENET1_RST_N <= not int_res;
   
-  pll_inst : entity work.pll generic map(
-      input_freq  => pll_infreq,
-      multiply_by => pll_mult,
-      divide_by   => pll_div,
-
-		clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div
-    )
-    port map(
-      inclk0 => clk,
-      c0     => clk_int
-    );
+  cyc4_pll_all_inst : entity work.cyc4_pll_all PORT MAP (
+      inclk0	 => clk,
+      c0	 => clk_int,
+      c1	 => clk_125,
+      c2	 => clk_125_90,
+      locked	 => open
+  );
 
 
-	pll_inst2 : entity work.pll generic map(
-      input_freq  => pll_infreq,
-      multiply_by => pll_mult,
-      divide_by   => pll_div,
 
-      clk1_multiply_by => clk1_mult,
-      clk1_divide_by => clk1_div
-    )
-    port map(
-	   inclk0 => CLOCK2_50,
-		c0 => open,
-      c1     => clk_125,
-      c2     => clk_125_90
-    );
+  -- pll_inst : entity work.pll generic map( --Old Patmos Cyclone II PLL
+  --    input_freq  => pll_infreq,
+  --    multiply_by => pll_mult,
+  --    divide_by   => pll_div,
+
+	--	clk1_multiply_by => clk1_mult,
+  --    clk1_divide_by => clk1_div
+  --  )
+  --  port map(
+  --    inclk0 => clk,
+  --    c0     => clk_int,
+	--	c1     => open
+  --  );
+
   -- we use a PLL
   -- clk_int <= clk;
 
@@ -192,7 +179,6 @@ begin
     io_FShark_gtx_clk => clk_125,
     io_FShark_gtx_clk90 => clk_125_90,
     io_FShark_gtx_rst =>  int_res,
-	 
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
@@ -207,13 +193,6 @@ begin
     io_FShark_rgmii_tx_ctl => ENET0_TX_EN,
 
 
-    io_FShark_rgmii_rx_clk_1 => ENET1_RX_CLK,
-    io_FShark_rgmii_rxd_1 => ENET1_RX_DATA,
-    io_FShark_rgmii_rx_ctl_1 =>  ENET1_RX_DV,
-    io_FShark_rgmii_tx_clk_1 => ENET1_GTX_CLK,
-    io_FShark_rgmii_txd_1 => ENET1_TX_DATA,
-    io_FShark_rgmii_tx_ctl_1 => ENET1_TX_EN,
-
     io_SRamCtrl_ramOut_addr => oSRAM_A,
     io_SRamCtrl_ramOut_doutEna => sram_out_dout_ena,
     io_SRamCtrl_ramIn_din => SRAM_DQ,
@@ -223,25 +202,6 @@ begin
     io_SRamCtrl_ramOut_nwe => oSRAM_WE_N,
     io_SRamCtrl_ramOut_nlb => oSRAM_LB_N,
     io_SRamCtrl_ramOut_nub => oSRAM_UB_N
-    
+
     );
-
-    ENET0_RST_N <= '1';
-    ENET1_RST_N <= '1';
-
-  -- Ethernet Pass-through
-  --ENET1_GTX_CLK <= clk_125;
-  --ENET1_TX_DATA <= ENET0_RX_DATA;
-  --ENET1_TX_EN <= ENET0_RX_DV;
-  --ENET0_GTX_ <= clk_125;
-  --ENET0_TX_DATA <= ENET1_RX_DATA;
-  --ENET0_TX_EN <= ENET1_RX_DV;
-
-  --oGpioPins(0) <= ENET0_RX_CLK;
-  --oGpioPins(4 downto 1) <= ENET0_RX_DATA;
-  --oGpioPins(5) <=  ENET0_RX_DV;
-  --oGpioPins(6) <= ENET1_RX_CLK;
-  --oGpioPins(10 downto 7) <= ENET1_RX_DATA;
-  --oGpioPins(11) <= ENET1_RX_DV;
-
 end architecture rtl;
