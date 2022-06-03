@@ -58,3 +58,21 @@ Adding:
 -v
 ```
 After the .elf will enable Waveform generation which then can be viewed in GTKWave or a similar waveform viewer.
+Implementing FShark on an FPGA
+==============================
+To implement and synthesize FShark for an FPGA, is done as follows:
+First add the corresponding manufactorer target to both FShark.scala and to the corresponding XML file found in hardware/config
+The following is the possible options for targets:
+```
+ALTERA, XILINX, SIM, GENERIC
+```
+Afterwards run the following command:
+```
+make gen
+```
+This command compiles only the Chisel code, which might not be necessary but is done for conciveness.
+Finally the command that implements the design unto an FPGA via JTAG is:
+```
+make BOOTAPP=bootable-VeriMAC comp gen synth config
+```
+The design will now be implemented on the chosen FPGA board.
