@@ -78,8 +78,8 @@ constrain_axis_async_fifo_inst "patmos_inst|FShark|ethmac1g|tx_fifo|fifo_inst"
 
 # ENET0 RGMII interface
 constrain_rgmii_input_pins "enet0" "ENET0_RX_CLK" "ENET0_RX_DV ENET0_RX_D*"
-constrain_rgmii_output_pins "enet0" "cyc4_pll_all_inst|altpll_component|auto_generated|pll1|clk[2]" "ENET0_GTX_CLK" "ENET0_TX_EN ENET0_TX_D*"
+constrain_rgmii_output_pins "enet0" "cyc4_pll_all_inst|altpll_component|auto_generated|pll1|clk[1]" "ENET0_GTX_CLK" "ENET0_TX_EN ENET0_TX_D*"
 
 # ENET1 RGMII interface
 constrain_rgmii_input_pins "enet1" "ENET1_RX_CLK" "ENET1_RX_DV ENET1_RX_D*"
-constrain_rgmii_output_pins "enet1" "cyc4_pll_all_inst|altpll_component|auto_generated|pll1|clk[2]" "ENET1_GTX_CLK" "ENET1_TX_EN ENET1_TX_D*"
+constrain_rgmii_output_pins "enet1" "cyc4_pll_all_inst|altpll_component|auto_generated|pll1|clk[1]" "ENET1_GTX_CLK" "ENET1_TX_EN ENET1_TX_D*"
