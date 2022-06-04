@@ -9,7 +9,7 @@ set_clock_groups -asynchronous -group [get_clocks {clk}]
 
 
 # Create generated clocks based on PLLs
-derive_pll_clocks -use_tan_name
+derive_pll_clocks
 
 derive_clock_uncertainty
 
