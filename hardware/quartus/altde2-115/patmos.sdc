@@ -4,19 +4,12 @@
 
 # Clock in input pin (50 MHz)
 create_clock -period 20 [get_ports clk]
-create_clock -period 20 [get_ports CLOCK2_50]
-#create_clock -period 20.00 -name {CLOCK3_50}  [get_ports {CLOCK3_50}]
-
-# Clock PHY (25MHz)
-#create_clock -period 40.00 -name {ENETCLK_25} [get_ports {ENETCLK_25}]
 
 set_clock_groups -asynchronous -group [get_clocks {clk}]
-set_clock_groups -asynchronous -group [get_clocks {CLOCK2_50}]
-#set_clock_groups -asynchronous -group [get_clocks {CLOCK3_50}]
-#set_clock_groups -asynchronous -group [get_clocks {ENETCLK_25}]
+
 
 # Create generated clocks based on PLLs
-derive_pll_clocks -use_tan_name
+derive_pll_clocks
 
 derive_clock_uncertainty
 
@@ -51,7 +44,6 @@ set_false_path -from * -to [get_ports ENET1_RST_N]
 source ../../WiresharkMAC/fpga/lib/eth/syn/quartus/eth_mac_1g_rgmii.sdc
 source ../../WiresharkMAC/fpga/lib/eth/syn/quartus/rgmii_phy_if.sdc
 source ../../WiresharkMAC/fpga/lib/eth/syn/quartus/rgmii_io.sdc
-source ../../WiresharkMAC/fpga/lib/eth/lib/axis/syn/quartus/sync_reset.sdc
 source ../../WiresharkMAC/fpga/lib/eth/lib/axis/syn/quartus/axis_async_fifo.sdc
 
 
@@ -65,8 +57,8 @@ constrain_axis_async_fifo_inst "patmos_inst|FShark|ethmac1g|tx_fifo|fifo_inst"
 
 # ENET0 RGMII interface
 constrain_rgmii_input_pins "enet0" "ENET0_RX_CLK" "ENET0_RX_DV ENET0_RX_D*"
-constrain_rgmii_output_pins "enet0" "pll_inst2|altpll_component|pll|clk[1]" "ENET0_GTX_CLK" "ENET0_TX_EN ENET0_TX_D*"
+constrain_rgmii_output_pins "enet0" "cyc4_pll_all_inst|altpll_component|auto_generated|pll1|clk[1]" "ENET0_GTX_CLK" "ENET0_TX_EN ENET0_TX_D*"
 
 # ENET1 RGMII interface
 constrain_rgmii_input_pins "enet1" "ENET1_RX_CLK" "ENET1_RX_DV ENET1_RX_D*"
-constrain_rgmii_output_pins "enet1" "pll_inst2|altpll_component|pll|clk[1]" "ENET1_GTX_CLK" "ENET1_TX_EN ENET1_TX_D*"
+constrain_rgmii_output_pins "enet1" "cyc4_pll_all_inst|altpll_component|auto_generated|pll1|clk[1]" "ENET1_GTX_CLK" "ENET1_TX_EN ENET1_TX_D*"
