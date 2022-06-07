@@ -4,17 +4,8 @@
 
 # Clock in input pin (50 MHz)
 create_clock -period 20 [get_ports clk]
-#create_clock -period 20 [get_ports CLOCK2_50]
-#create_clock -period 20.00 -name {CLOCK3_50}  [get_ports {CLOCK3_50}]
-create_clock -period 40.00 -name {ENETCLK_25} [get_ports {ENETCLK_25}]
-
 # Clock PHY (25MHz)
-#create_clock -period 40.00 -name {ENETCLK_25} [get_ports {ENETCLK_25}]
 set_clock_groups -asynchronous -group [get_clocks {clk}]
-set_clock_groups -asynchronous -group [get_clocks {CLOCK_50}]
-set_clock_groups -asynchronous -group [get_clocks {ENETCLK_25}]
-#set_clock_groups -asynchronous -group [get_clocks {CLOCK3_50}]
-#set_clock_groups -asynchronous -group [get_clocks {ENETCLK_25}]
 
 # Create generated clocks based on PLLs
 #derive_pll_clocks -use_tan_name
@@ -37,23 +28,24 @@ set_max_delay -from [get_ports *RAM*] -to [get_registers {*}] 3
 # Tco 5.5 ns
 set_max_delay -from [get_registers *] -to [get_ports {*RAM*}] 5.5
 
-create_clock -period "40.000 ns" -name {altera_reserved_tck} {altera_reserved_tck}
-set_clock_groups -asynchronous -group [get_clocks {altera_reserved_tck}]
+#create_clock -period "40.000 ns" -name {altera_reserved_tck} {altera_reserved_tck}
+#set_clock_groups -asynchronous -group [get_clocks {altera_reserved_tck}]
 #JTAG Signal Constraints
 #constrain the TDI TMS and TDO ports  -- (modified from timequest SDC cookbook)
-set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tdi]
-set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tms]
-set_output_delay -clock altera_reserved_tck -clock_fall -fall -max 5 [get_ports altera_reserved_tdo]
+#set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tdi]
+#set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tms]
+#set_output_delay -clock altera_reserved_tck -clock_fall -fall -max 5 [get_ports altera_reserved_tdo]
 
 # Reset handler
-set_max_delay -from [get_registers "res_reg*"] -to [get_registers {speed_reg*}] 2
-set_max_delay -from [get_registers "int_res"] -to [get_registers {speed_reg*}] 2
+#set_max_delay -from [get_registers "res_reg*"] -to [get_registers {speed_reg*}] 2
+#set_max_delay -from [get_registers "int_res"] -to [get_registers {speed_reg*}] 2
 
 set_false_path -from [get_ports ENET0_INT_N] -to *
 set_false_path -from * -to [get_ports ENET0_RST_N]
 
 set_false_path -from [get_ports ENET1_INT_N] -to *
 set_false_path -from * -to [get_ports ENET1_RST_N]
+
 
 #set_false_path -from [get_ports {int_res}] -to [all_registers]
 derive_pll_clocks
