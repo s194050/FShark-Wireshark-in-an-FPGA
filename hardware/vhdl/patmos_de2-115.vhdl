@@ -35,6 +35,7 @@ entity patmos_top is
     ENET0_RX_CLK : in std_logic;
     ENET0_RX_DATA : in std_logic_vector(3 downto 0);
     ENET0_RX_DV : in std_logic;
+    
     ENET0_GTX_CLK : out std_logic;
     ENET0_TX_DATA : out std_logic_vector(3 downto 0);
     ENET0_TX_EN : out std_logic;

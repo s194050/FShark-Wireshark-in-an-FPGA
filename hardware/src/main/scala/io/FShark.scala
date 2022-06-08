@@ -19,15 +19,15 @@ object FShark extends DeviceObject {
     override val pins = new Bundle() {
       // Clock and reset logic
       //----------------------
-      val gtx_clk = Input(Clock())
-      val gtx_clk90 = Input(Clock())
+      val gtx_clk = Input(Bool())
+      val gtx_clk90 = Input(Bool())
       val gtx_rst = Input(Bool())
       //RGMII interface
       //---------------
-      val rgmii_rx_clk = Input(Clock())
+      val rgmii_rx_clk = Input(Bool())
       val rgmii_rxd = Input(UInt(4.W))
       val rgmii_rx_ctl = Input(Bool())
-      val rgmii_tx_clk = Output(Clock())
+      val rgmii_tx_clk = Output(Bool())
       val rgmii_txd = Output(UInt(4.W))
       val rgmii_tx_ctl = Output(Bool())
     }
@@ -39,8 +39,8 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
   val io = IO(new Bundle(){
     // Clock and reset logic
     //----------------------
-    val gtx_clk = Input(Clock())
-    val gtx_clk90 = Input(Clock())
+    val gtx_clk = Input(Bool())
+    val gtx_clk90 = Input(Bool())
     val gtx_rst = Input(Bool())
     val logic_clk = Input(Clock())
     val logic_rst = Input(Bool())
@@ -62,10 +62,10 @@ class eth_mac_1gBB(target: String, datawidth: Int) extends BlackBox(Map("TARGET"
     val rx_axis_tuser = Output(Bool())
     //RGMII interface
     //---------------
-    val rgmii_rx_clk = Input(Clock())
+    val rgmii_rx_clk = Input(Bool())
     val rgmii_rxd = Input(UInt(4.W))
     val rgmii_rx_ctl = Input(Bool())
-    val rgmii_tx_clk = Output(Clock())
+    val rgmii_tx_clk = Output(Bool())
     val rgmii_txd = Output(UInt(4.W))
     val rgmii_tx_ctl = Output(Bool())
     //Status
@@ -133,7 +133,6 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   CircBuffer.io.filter_bus.bits.tdata := FShark_filter.io.filter_bus.bits.tdata
   CircBuffer.io.filter_bus.valid := FShark_filter.io.filter_bus.valid
   FShark_filter.io.filter_bus.ready := CircBuffer.io.filter_bus.ready
-
   // Connecting filter and FShark
   //-----------------------------
   FShark_filter.io.filterIndex := filterIndex

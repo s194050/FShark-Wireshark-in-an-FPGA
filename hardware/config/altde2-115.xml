@@ -1,7 +1,7 @@
 <patmos default="default.xml">
   <description>default configuration for DE2-115 board</description>
 
-  <frequency Hz="80000000"/>
+  <frequency Hz="75000000"/>
 
   <!-- Default is single core -->
   <!-- <pipeline dual="false" />
@@ -12,11 +12,11 @@
 
   <ExtMem size="2M" DevTypeRef="Sram16" />
   <!-- <ExtMem size="128k" DevTypeRef="OCRam" /> -->
-
+  <!-- intrs="2" -->
   <IOs>
   <IO DevTypeRef="Leds" offset="9"/>
   <IO DevTypeRef="Keys" offset="10" intrs="2,3,4,5"/>
-  <IO DevTypeRef="FShark" offset="11" intrs="2"/>
+  <IO DevTypeRef="FShark" offset="11"/>
   </IOs>
 
   <Devs>

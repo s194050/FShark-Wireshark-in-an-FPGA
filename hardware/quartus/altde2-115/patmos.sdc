@@ -28,13 +28,13 @@ set_max_delay -from [get_ports *RAM*] -to [get_registers {*}] 3
 # Tco 5.5 ns
 set_max_delay -from [get_registers *] -to [get_ports {*RAM*}] 5.5
 
-#create_clock -period "40.000 ns" -name {altera_reserved_tck} {altera_reserved_tck}
-#set_clock_groups -asynchronous -group [get_clocks {altera_reserved_tck}]
+create_clock -period "200.000 ns" -name {altera_reserved_tck} {altera_reserved_tck}
+set_clock_groups -asynchronous -group [get_clocks {altera_reserved_tck}]
 #JTAG Signal Constraints
 #constrain the TDI TMS and TDO ports  -- (modified from timequest SDC cookbook)
-#set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tdi]
-#set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tms]
-#set_output_delay -clock altera_reserved_tck -clock_fall -fall -max 5 [get_ports altera_reserved_tdo]
+set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tdi]
+set_input_delay  -clock altera_reserved_tck 5 [get_ports altera_reserved_tms]
+set_output_delay -clock altera_reserved_tck -clock_fall -fall -max 5 [get_ports altera_reserved_tdo]
 
 # Reset handler
 #set_max_delay -from [get_registers "res_reg*"] -to [get_registers {speed_reg*}] 2

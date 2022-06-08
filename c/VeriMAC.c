@@ -1,7 +1,7 @@
 #include <machine/patmos.h>
 #include <machine/spm.h>
-//#include <stdio.h>
-#include "include/bootable.h"
+#include <stdio.h>
+//#include "include/bootable.h"
 
 void tohex(int in, char * out)
 {
@@ -40,7 +40,7 @@ int main(){
 	for (;;) {
 		
 		frameLength = *io_ptr/2;
-		//printf("Printing a frame of length: %d\n", frameLength );
+		printf("Printing a frame of length: %d\n", frameLength );
 		//*uart_data = ("Printing a frame of length: %d\n", frameLength);
 		/*
 		while ((*uart_status & 0x01) == 0) {
