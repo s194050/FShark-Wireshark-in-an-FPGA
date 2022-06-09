@@ -32,22 +32,22 @@ entity patmos_top is
     oSRAM_UB_N : out std_logic;
 
     -- Phy0
-    ENET0_RX_CLK : in std_logic;
-    ENET0_RX_DATA : in std_logic_vector(3 downto 0);
-    ENET0_RX_DV : in std_logic;
+    --ENET0_RX_CLK : in std_logic;
+    --ENET0_RX_DATA : in std_logic_vector(3 downto 0);
+    --ENET0_RX_DV : in std_logic;
     
-    ENET0_GTX_CLK : out std_logic;
-    ENET0_TX_DATA : out std_logic_vector(3 downto 0);
-    ENET0_TX_EN : out std_logic;
-    ENET0_RST_N : out std_logic;
-    ENET0_INT_N : in std_logic;
+    --ENET0_GTX_CLK : out std_logic;
+    --ENET0_TX_DATA : out std_logic_vector(3 downto 0);
+    --ENET0_TX_EN : out std_logic;
+    --ENET0_RST_N : out std_logic;
+    --ENET0_INT_N : in std_logic;
     --PHY1
     ENET1_RX_CLK : in std_logic;
     ENET1_RX_DATA : in std_logic_vector(3 downto 0);
     ENET1_RX_DV : in std_logic;
-    ENET1_GTX_CLK : out std_logic;
-    ENET1_TX_DATA : out std_logic_vector(3 downto 0);
-    ENET1_TX_EN : out std_logic;
+    --ENET1_GTX_CLK : out std_logic;
+    --ENET1_TX_DATA : out std_logic_vector(3 downto 0);
+    --ENET1_TX_EN : out std_logic;
     ENET1_RST_N : out std_logic;
     ENET1_INT_N : in std_logic
   );
@@ -58,8 +58,7 @@ architecture rtl of patmos_top is
 		port(
 			clock           : in  std_logic;
 			reset           : in  std_logic;
-			
-
+	
       io_Leds_led : out std_logic_vector(8 downto 0);
       io_Keys_key : in  std_logic_vector(3 downto 0);
       io_UartCmp_tx                    : out std_logic;
@@ -76,6 +75,7 @@ architecture rtl of patmos_top is
       io_FShark_rgmii_tx_clk : out std_logic;
       io_FShark_rgmii_txd : out std_logic_vector(3 downto 0);
       io_FShark_rgmii_tx_ctl : out std_logic;
+      -- SRAM
       io_SramCtrl_ramOut_addr : out std_logic_vector(19 downto 0);
       io_SramCtrl_ramOut_doutEna : out std_logic;
       io_SramCtrl_ramIn_din : in std_logic_vector(15 downto 0);
@@ -101,7 +101,7 @@ architecture rtl of patmos_top is
   signal clk_int : std_logic;
   signal clk_125 : std_logic;
   signal clk_125_90 : std_logic;
-
+  signal res_non : std_logic := '0';
   -- for generation of internal reset
   signal int_res            : std_logic;
   signal res_reg1, res_reg2 : std_logic;
@@ -115,8 +115,7 @@ architecture rtl of patmos_top is
   attribute altera_attribute of res_cnt : signal is "POWER_UP_LEVEL=LOW";
 
 begin
-  ENET0_RST_N <= not int_res;
-  ENET1_RST_N <= not int_res;
+  --ENET0_RST_N <= not int_res;
   
   cyc4_pll_all_inst : entity work.cyc4_pll_all PORT MAP (
       inclk0	 => clk,
@@ -176,7 +175,6 @@ begin
     end if;
   end process;
   
-  
     -- tristate output to ssram
     process(sram_out_dout_ena, sram_out_dout)
     begin
@@ -195,19 +193,19 @@ begin
 	 
     io_FShark_gtx_clk => clk_125,
     io_FShark_gtx_clk90 => clk_125_90,
-    io_FShark_gtx_rst =>  int_res,
+    io_FShark_gtx_rst =>  res_non,
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
     io_UartCmp_tx => oUartPins_txd,
     io_UartCmp_rx => iUartPins_rxd,
 
-    io_FShark_rgmii_rx_clk => ENET0_RX_CLK,
-    io_FShark_rgmii_rxd => ENET0_RX_DATA,
-    io_FShark_rgmii_rx_ctl =>  ENET0_RX_DV,
-    io_FShark_rgmii_tx_clk =>  ENET0_GTX_CLK,
-    io_FShark_rgmii_txd => ENET0_TX_DATA,
-    io_FShark_rgmii_tx_ctl => ENET0_TX_EN,
+    io_FShark_rgmii_rx_clk => ENET1_RX_CLK,
+    io_FShark_rgmii_rxd => ENET1_RX_DATA,
+    io_FShark_rgmii_rx_ctl => ENET1_RX_DV,
+    io_FShark_rgmii_tx_clk => open,--  ENET1_GTX_CLK,
+    io_FShark_rgmii_txd => open, --ENET1_TX_DATA,
+    io_FShark_rgmii_tx_ctl => open, --ENET1_TX_EN,
 
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,
@@ -224,5 +222,5 @@ begin
 
 
   --ENET0_RST_N <= '1';
-  --ENET1_RST_N <= '1';
+  ENET1_RST_N <= '1';
 end architecture rtl;
