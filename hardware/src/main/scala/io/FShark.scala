@@ -148,7 +148,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   ethmac1g.io.logic_clk := clock
   ethmac1g.io.logic_rst := reset
   // Configuration
-  ethmac1g.io.ifg_delay := WireInit(12.U(datawidth.W))
+  ethmac1g.io.ifg_delay := WireInit(12.U(8.W))
   // RGMII Interface
   ethmac1g.io.rgmii_rx_clk := io.pins.rgmii_rx_clk
   ethmac1g.io.rgmii_rxd := io.pins.rgmii_rxd

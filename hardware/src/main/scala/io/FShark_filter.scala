@@ -98,7 +98,11 @@ class FShark_filter(datawidth: Int = 16) extends  Module {
             }.otherwise {
               stateBuffer := bufferBadFrame
             }
-
+          }.elsewhen(cntFrame < io.filterIndex && io.axis_tlast){
+            cntFrame := cntFrame // Set the counter to the current value at next rising edge
+            io.axis_tready := false.B
+            io.filter_bus.valid := true.B
+            stateBuffer := bufferFlushFrame
           }
         }
       }
