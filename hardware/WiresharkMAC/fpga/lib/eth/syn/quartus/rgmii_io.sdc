@@ -31,7 +31,7 @@ proc constrain_rgmii_input_pins { name clk_pin data_pins } {
     # create_clock -name "virt_${name}_rx_clk_2m5" -period 400.000
 
     #input clock has 90 degree phase shift
-    create_clock -name "${name}_rx_clk_125m" -period 8.000 "$clk_pin" -waveform {2 6}
+    create_clock -name "${name}_rx_clk_125m" -period 8.000 "$clk_pin"  -waveform {2 6}
     # create_clock -name "${name}_rx_clk_25m" -period 40.000 "$clk_pin" -waveform {10 30} -add
     # create_clock -name "${name}_rx_clk_2m5" -period 400.000 "$clk_pin" -waveform {100 300} -add
 

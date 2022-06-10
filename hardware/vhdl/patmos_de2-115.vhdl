@@ -32,24 +32,24 @@ entity patmos_top is
     oSRAM_UB_N : out std_logic;
 
     -- Phy0
-    --ENET0_RX_CLK : in std_logic;
-    --ENET0_RX_DATA : in std_logic_vector(3 downto 0);
-    --ENET0_RX_DV : in std_logic;
+    ENET0_RX_CLK : in std_logic;
+    ENET0_RX_DATA : in std_logic_vector(3 downto 0);
+    ENET0_RX_DV : in std_logic;
     
-    --ENET0_GTX_CLK : out std_logic;
-    --ENET0_TX_DATA : out std_logic_vector(3 downto 0);
-    --ENET0_TX_EN : out std_logic;
-    --ENET0_RST_N : out std_logic;
-    --ENET0_INT_N : in std_logic;
+    ENET0_GTX_CLK : out std_logic;
+    ENET0_TX_DATA : out std_logic_vector(3 downto 0);
+    ENET0_TX_EN : out std_logic;
+    ENET0_RST_N : out std_logic;
+    ENET0_INT_N : in std_logic
     --PHY1
-    ENET1_RX_CLK : in std_logic;
-    ENET1_RX_DATA : in std_logic_vector(3 downto 0);
-    ENET1_RX_DV : in std_logic;
+    --ENET1_RX_CLK : in std_logic;
+    --ENET1_RX_DATA : in std_logic_vector(3 downto 0);
+    --ENET1_RX_DV : in std_logic;
     --ENET1_GTX_CLK : out std_logic;
     --ENET1_TX_DATA : out std_logic_vector(3 downto 0);
     --ENET1_TX_EN : out std_logic;
-    ENET1_RST_N : out std_logic;
-    ENET1_INT_N : in std_logic
+    --ENET1_RST_N : out std_logic;
+    --ENET1_INT_N : in std_logic
   );
 end entity patmos_top;
 
@@ -200,12 +200,12 @@ begin
     io_UartCmp_tx => oUartPins_txd,
     io_UartCmp_rx => iUartPins_rxd,
 
-    io_FShark_rgmii_rx_clk => ENET1_RX_CLK,
-    io_FShark_rgmii_rxd => ENET1_RX_DATA,
-    io_FShark_rgmii_rx_ctl => ENET1_RX_DV,
-    io_FShark_rgmii_tx_clk => open,--  ENET1_GTX_CLK,
-    io_FShark_rgmii_txd => open, --ENET1_TX_DATA,
-    io_FShark_rgmii_tx_ctl => open, --ENET1_TX_EN,
+    io_FShark_rgmii_rx_clk => ENET0_RX_CLK,
+    io_FShark_rgmii_rxd => ENET0_RX_DATA,
+    io_FShark_rgmii_rx_ctl => ENET0_RX_DV,
+    io_FShark_rgmii_tx_clk => ENET0_GTX_CLK,
+    io_FShark_rgmii_txd => ENET0_TX_DATA,
+    io_FShark_rgmii_tx_ctl => ENET0_TX_EN,
 
 
     io_SRamCtrl_ramOut_addr => oSRAM_A,
@@ -221,6 +221,6 @@ begin
     );
 
 
-  --ENET0_RST_N <= '1';
-  ENET1_RST_N <= '1';
+  ENET0_RST_N <= '1';
+  --ENET1_RST_N <= '1';
 end architecture rtl;

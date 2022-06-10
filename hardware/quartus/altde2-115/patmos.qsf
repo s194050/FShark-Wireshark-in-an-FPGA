@@ -182,7 +182,8 @@ set_location_assignment PIN_D13 -to ENET1_LINK100
 set_location_assignment PIN_A14 -to ENETCLK_25
 #=====================================================
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
-set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
+#set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE BALANCED
+set_global_assignment -name CYCLONE_OPTIMIZATION_TECHNIQUE SPEED
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
@@ -262,7 +263,7 @@ set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/lib/axi
 set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/lib/axis/rtl/axis_async_fifo.v
 set_global_assignment -name VERILOG_FILE ../../WiresharkMAC/fpga/lib/eth/lib/axis/rtl/axis_adapter.v
 set_global_assignment -name FITTER_EFFORT "STANDARD FIT"
-set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
+#set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC ON
 set_global_assignment -name SEED 6

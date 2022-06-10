@@ -104,7 +104,6 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val filterSet = RegInit(false.B)
   // Verilog Ethernet MAC blackbox
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
-
   //Filter for FMAC, input to the Circular buffer
   val FShark_filter = Module(new FShark_filter(datawidth))
   // Connecting MAC and filter
@@ -159,7 +158,6 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   io.pins.rgmii_tx_clk := ethmac1g.io.rgmii_tx_clk
   io.pins.rgmii_txd := ethmac1g.io.rgmii_txd
   io.pins.rgmii_tx_ctl := ethmac1g.io.rgmii_tx_ctl
-
   // Default response
   val respReg = RegInit(OcpResp.NULL)
   respReg := OcpResp.NULL
