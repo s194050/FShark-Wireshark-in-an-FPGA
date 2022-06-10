@@ -188,9 +188,10 @@ set_location_assignment PIN_A14 -to ENETCLK_25
 #=====================================================
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name CYCLONEII_OPTIMIZATION_TECHNIQUE SPEED
+#set_global_assignment -name CYCLONEIV_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
+#set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
 
 #set_global_assignment -name VHDL_FILE ../../../../argo/src/ocp/ocp_config.vhd
 #set_global_assignment -name VHDL_FILE ../../../../argo/src/ocp/ocp.vhd
