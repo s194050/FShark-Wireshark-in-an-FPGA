@@ -106,6 +106,8 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val ethmac1g = Module(new eth_mac_1gBB(target,datawidth))
   //Filter for FMAC, input to the Circular buffer
   val FShark_filter = Module(new FShark_filter(datawidth))
+  //filterValue := 18.U
+  //filterIndex := 18.U
   // Connecting MAC and filter
   //--------------------------
   ethmac1g.io.rx_axis_tready := FShark_filter.io.axis_tready
@@ -119,7 +121,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   //FShark_filter.io.axis_tdata := 1.U
   // Circular buffer for frame holding
   val CircBuffer = Module(new CircularBuffer(1536,datawidth))
-  val memFifo = Module(new MemFifo(UInt(datawidth.W),100))
+  val memFifo = Module(new MemFifo(UInt(datawidth.W),500))
   // Connecting buffer and FIFO
   //---------------------------
   endOfFrame := CircBuffer.io.endOfFrame
@@ -148,7 +150,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   ethmac1g.io.gtx_rst := io.pins.gtx_rst
   ethmac1g.io.gtx_clk90 := io.pins.gtx_clk90
   ethmac1g.io.logic_clk := clock
-  ethmac1g.io.logic_rst := 0.U
+  ethmac1g.io.logic_rst := reset
   // Configuration
   ethmac1g.io.ifg_delay := 12.U
   // RGMII Interface

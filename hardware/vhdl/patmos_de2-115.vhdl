@@ -115,7 +115,7 @@ architecture rtl of patmos_top is
   attribute altera_attribute of res_cnt : signal is "POWER_UP_LEVEL=LOW";
 
 begin
-  --ENET0_RST_N <= not int_res;
+  ENET0_RST_N <= not int_res;
   
   cyc4_pll_all_inst : entity work.cyc4_pll_all PORT MAP (
       inclk0	 => clk,
@@ -193,7 +193,7 @@ begin
 	 
     io_FShark_gtx_clk => clk_125,
     io_FShark_gtx_clk90 => clk_125_90,
-    io_FShark_gtx_rst =>  res_non,
+    io_FShark_gtx_rst =>  int_res,
 
     io_Leds_led => oLedsPins_led,
     io_Keys_key => iKeysPins_key,
@@ -221,6 +221,6 @@ begin
     );
 
 
-  ENET0_RST_N <= '1';
+  --ENET0_RST_N <= '1';
   --ENET1_RST_N <= '1';
 end architecture rtl;

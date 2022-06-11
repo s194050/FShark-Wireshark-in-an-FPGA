@@ -14,12 +14,12 @@ derive_clock_uncertainty
 # ** Input/Output Delays
 # Use FPGA-centric constraints (general pins)
 # Tsu 5 ns
-set_max_delay -from [remove_from_collection [all_inputs] {*ENET0* *rgmii* eth_mac*}] -to [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac*}] 5
-set_min_delay -from [remove_from_collection [all_inputs] {*ENET0* *rgmii* eth_mac*}] -to [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac*}] 0
+set_max_delay -from [remove_from_collection [all_inputs] {*ENET0* *rgmii* eth_mac* altera_reserved*}] -to [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac* altera_reserved*}] 5
+set_min_delay -from [remove_from_collection [all_inputs] {*ENET0* *rgmii* eth_mac* altera_reserved*}] -to [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac* altera_reserved*}] 0
 
 # Tco 10 ns
-set_max_delay -from [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac*}] -to [remove_from_collection [all_outputs] {*ENET0* *rgmii* eth_mac*}] 10
-set_min_delay -from [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac*}] -to [remove_from_collection [all_outputs] {*ENET0* *rgmii* eth_mac*}] 0
+set_max_delay -from [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac* altera_reserved*}] -to [remove_from_collection [all_outputs] {*ENET0* *rgmii* eth_mac* altera_reserved*}] 10
+set_min_delay -from [remove_from_collection [all_registers] {*ENET0* *rgmii* eth_mac* altera_reserved*}] -to [remove_from_collection [all_outputs] {*ENET0* *rgmii* eth_mac* altera_reserved*}] 0
 
 
 #Use FPGA-centric constraints (SRAM pins)
