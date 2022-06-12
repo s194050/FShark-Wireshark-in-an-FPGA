@@ -97,6 +97,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   val sendToPatmos = WireInit(false.B)
   val readHolder = RegInit(false.B)
   val writeToFIFO = RegInit(true.B)
+  val bitShiftDivisor = log2Ceil(datawidth / 8)
   // Initiate OCP interface variables
   val stopFrameRecording = RegInit(false.B)
   val filterIndex = RegInit(0.U(12.W))
@@ -115,7 +116,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
   FShark_filter.io.axis_tlast := ethmac1g.io.rx_axis_tlast
   FShark_filter.io.axis_tdata := ethmac1g.io.rx_axis_tdata
   // Circular buffer for frame holding
-  val CircBuffer = Module(new CircularBuffer(1536,datawidth))
+  val CircBuffer = Module(new CircularBuffer(1518,datawidth))
   val memFifo = Module(new MemFifo(UInt(datawidth.W),20000))
   // Connecting buffer and FIFO
   //---------------------------
@@ -193,7 +194,7 @@ class FShark(target: String,datawidth: Int) extends CoreDevice {
       }
       when(fullFIFO) { // When the FIFO is full, empty some of the first elements to avoid stall
         when(frameLength === 0.U) { // Read length of frame
-          frameLength := ((memFifo.io.deq.bits + 1.U) >> 1) + 1.U
+          frameLength := ((memFifo.io.deq.bits + 1.U) >> bitShiftDivisor) + 1.U
         }
         stateReg := fill_empty
       }

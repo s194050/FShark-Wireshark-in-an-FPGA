@@ -46,13 +46,14 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   val bufferValue = WireInit(0.U(datawidth.W))
   val readValue = RegInit(0.U(datawidth.W))
   val counter = RegInit(0.U((bitWidth).W))
+  val bitShiftDivisor = log2Ceil(datawidth / 8)
   // Boolean to handle whether a frame is being received
   io.frameRecieving := RegInit(false.B)
 
   // For handling flushing of a bad frame
-  val flush = Mux(io.filter_bus.bits.flushFrame,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 1.U), head)
+  val flush = Mux(io.filter_bus.bits.flushFrame,head-(((io.filter_bus.bits.tdata + 1.U)/(datawidth/8.U)) + 1.U), head)
   // For adding the header containing length in front of the frame
-  val Address = Mux(io.filter_bus.bits.addHeader,head-(((io.filter_bus.bits.tdata + 1.U)/2) + 2.U), flush)
+  val Address = Mux(io.filter_bus.bits.addHeader,head-(((io.filter_bus.bits.tdata + 1.U)/(datawidth/8.U)) + 2.U), flush)
 
   //Status booleans
   // Check buffer status
@@ -70,7 +71,7 @@ class CircularBuffer(depth: Int, datawidth: Int = 16) extends Module() {
   when(io.filter_bus.bits.addHeader){ // Signals End of frame, as such move back to place the header value
     io.endOfFrame := true.B
     readFrom := true.B
-    readValue := (io.filter_bus.bits.tdata + 1.U) >> 1
+    readValue := (io.filter_bus.bits.tdata + 1.U) >> bitShiftDivisor
     io.frameRecieving := false.B
   }
 
